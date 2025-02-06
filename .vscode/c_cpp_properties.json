@@ -1,0 +1,40 @@
+{
+    "env": {
+        "myIncludePath": [
+            "${workspaceFolder}/include/**"
+        ],
+        "myDefines": [
+            "DEBUG",
+            "MY_FEATURE=1"
+        ]
+    },
+    "configurations": [
+        {
+            "name": "Win32",
+            "browse": {
+                "path": [
+                    "${myIncludePath}",
+                    "${workspaceFolder}"
+                ]
+            },
+            "includePath": [
+                "C:\\msys64\\ucrt64\\include\\**",
+                "${env:myIncludePath}",
+                "${workspaceFolder}/*"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "C:\\msys64\\ucrt64\\bin\\clang++.exe",
+            "compilerArgs": [],
+            "cStandard": "c23",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "clang-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4,
+    "enableConfigurationSquiggles": true
+}
