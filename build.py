@@ -19,7 +19,8 @@ def run_cmd(cmd):
 
 def clean():
     print("----------- Performing CMake Clean --------------")
-    cmd=f'cmake --build {OUTPUT_DIR} --target clean'
+    cmd=f'cmake --build {OUTPUT_DIR} --target clean' 
+    # cmd=f'cmake --build {OUTPUT_DIR} --target clean VERBOSE=1'
     run_cmd(cmd)
     print("----------- CMake Clean Done -------------")
 
@@ -36,9 +37,13 @@ def fresh():
 def build():
     print("----------- Starting Build --------------")
 
-    cmd = f'cmake -G \"MinGW Makefiles\" --trace-expand  \
+    cmd = f'cmake -G \"MinGW Makefiles\"  \
             -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe \
             -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
+    # Commenting Verbose command, enable based on options later
+    # cmd = f'cmake -G \"MinGW Makefiles\" --trace-expand  \
+    #         -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe \
+    #         -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
     # For Ninja Build System in case required in future
     # cmake -G "Ninja Multi-Config" -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe -S . -B build/
     run_cmd(cmd)
@@ -46,7 +51,8 @@ def build():
 
     # cmd = f'make -C {OUTPUT_DIR}'
     #Alias to the above
-    cmd = f'cmake --build {OUTPUT_DIR} --verbose'
+    cmd = f'cmake --build {OUTPUT_DIR}'
+    # cmd = f'cmake --build {OUTPUT_DIR} --verbose'
     run_cmd(cmd)
     print("----------- Build Finished --------------")
 

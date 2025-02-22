@@ -4,7 +4,7 @@
 - decrypt file
 - When to encrypt and decrypt to make the file available to user ?
 - Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ? 
-- added verbose log to build system, make it optional later
+- Removed verbose log to build system, make it optional later
 
 
 
