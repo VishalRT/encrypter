@@ -56,18 +56,30 @@ def build():
     run_cmd(cmd)
     print("----------- Build Finished --------------")
 
+def help():
+    help_text = '''Supported Options : \n 
+          build -> do only a build. Will do incremental\n
+          clean-build -> Do CMake clean then build\n
+          fresh -> Clean the OUTPUT_DIR and then do a build"''' 
+    print(help_text)
+
+
 def main():
     print("----------- Starting Python Script --------------")
-
-    if(sys.argv[1] == "build"):
-        build()
-    elif(sys.argv[1] == "clean-build"):
-        clean()
-        build()
-    elif(sys.argv[1] == "fresh"):
-        fresh()
+    if(len(sys.argv) > 1):
+        if(sys.argv[1] == "build"):
+            build()
+        elif(sys.argv[1] == "clean-build"):
+            clean()
+            build()
+        elif(sys.argv[1] == "fresh"):
+            fresh()
+            build()
+        else:
+            print("Invalid parameters")
+            help()
     else:
-        print("Invalid parameters")
+        help()
 
     print("---------- Python Script Ended ------------")
 
