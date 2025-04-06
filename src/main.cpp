@@ -1,11 +1,12 @@
 #include <array>
-#include <expected>
 #include <fileapi.h>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <windows.h>
 
-std::string to_utf8(const std::wstring &wstr) {
+std::string to_utf8(const std::wstring &wstr)
+{
   if (wstr.empty())
     return {};
   int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr,
@@ -17,13 +18,15 @@ std::string to_utf8(const std::wstring &wstr) {
 }
 
 constexpr std::string_view TARGET_FILE = "test.txt";
-
-void PrintAction(DWORD action, const std::wstring &filename_w) {
+̥
+void PrintAction(DWORD action, const std::wstring &filename_w)
+{
   std::string filename = to_utf8(filename_w);
   if (filename != TARGET_FILE)
-    return; // Ignore other files
+    return;
 
-  switch (action) {
+  switch (action)
+  {
   case FILE_ACTION_ADDED:
     std::cout << "File Created: " << filename << "\n";
     break;
@@ -44,49 +47,55 @@ void PrintAction(DWORD action, const std::wstring &filename_w) {
   }
 }
 
-std::expected<HANDLE, DWORD>
-OpenDirectoryHandle(const std::wstring &directory) {
-  HANDLE hDir =
-      CreateFileW(directory.c_str(), FILE_LIST_DIRECTORY,
-                  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                  nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+std::optional<HANDLE> OpenDirectoryHandle(const std::wstring &directory)
+{
+  HANDLE dirHandle = CreateFileW(
+      directory.c_str(), FILE_LIST_DIRECTORY,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
 
-  if (hDir == INVALID_HANDLE_VALUE) {
-    return std::unexpected(GetLastError());
+  if (dirHandle == INVALID_HANDLE_VALUE)
+  {
+    return std::nullopt;
   }
-  return hDir;
+
+  return dirHandle;
 }
 
-void WatchDirectory(const std::wstring &directory) {
-  auto hDirExpected = OpenDirectoryHandle(directory);
-
-  if (!hDirExpected) {
-    std::cout << "Failed to open directory. Error: " << hDirExpected.error()
-              << "\n";
+void WatchDirectory(const std::wstring &directory)
+{
+  auto hDirOpt = OpenDirectoryHandle(directory);
+  if (!hDirOpt.has_value())
+  {
+    std::cout << "Failed to open directory. Error: " << GetLastError() << "\n";
     return;
-  } else {
-    std::cout << "Handle received from CreateFileW\n";
   }
-  HANDLE hDir = hDirExpected.value();
+
+  std::cout << "Handle received from CreateFileW\n";
+  HANDLE watchDirHandle = hDirOpt.value();
+
   std::array<char, 1024> buffer;
   DWORD bytesReturned;
 
   while (ReadDirectoryChangesW(
-      hDir, buffer.data(), static_cast<DWORD>(buffer.size()),
+      watchDirHandle, buffer.data(), static_cast<DWORD>(buffer.size()),
       FALSE, // Don't watch subdirectories
       FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE |
-          FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_ATTRIBUTES,
-      &bytesReturned, nullptr, nullptr)) {
+          FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_ATTRIBUTES |
+          FILE_NOTIFY_CHANGE_CREATION,
+      &bytesReturned, nullptr, nullptr))
+  {
 
     FILE_NOTIFY_INFORMATION *pNotify =
         reinterpret_cast<FILE_NOTIFY_INFORMATION *>(buffer.data());
 
-    /*std::wcout << "ReadDirectoryChangesW received change notification\n"*/
-    /*           << "FileName:" << *(pNotify->FileName) << "\n"*/
-    /*           << "FileLength: " << pNotify->FileNameLength << '\n'*/
-    /*           << "FileAction:  " << pNotify->Action << '\n';*/
+    std::wcout << "ReadDirectoryChangesW received change notification\n"
+               << "FileName:" << *(pNotify->FileName) << "\n"
+               << "FileLength: " << pNotify->FileNameLength << '\n'
+               << "FileAction:  " << pNotify->Action << '\n';
 
-    do {
+    do
+    {
       std::wstring filename_w(pNotify->FileName,
                               pNotify->FileNameLength / sizeof(WCHAR));
       PrintAction(pNotify->Action, filename_w);
@@ -98,11 +107,12 @@ void WatchDirectory(const std::wstring &directory) {
     } while (true);
   }
 
-  std::cout << "Directory Reading successfull closing handle\n";
-  CloseHandle(hDir);
+  std::cout << "Directory reading complete, closing handle\n";
+  CloseHandle(watchDirHandle);
 }
 
-int main() {
+int main()
+{
   constexpr std::wstring_view directory =
       L"C:\\Users\\Vishal\\Documents\\workspace\\encrypter\\test\\files";
 
