@@ -1,9 +1,10 @@
+#include <array>
 #include <expected>
+#include <fileapi.h>
 #include <iostream>
 #include <string>
 #include <windows.h>
 
-// Helper function to convert std::wstring (UTF-16) to std::string (UTF-8)
 std::string to_utf8(const std::wstring &wstr) {
   if (wstr.empty())
     return {};
@@ -58,38 +59,44 @@ OpenDirectoryHandle(const std::wstring &directory) {
 
 void WatchDirectory(const std::wstring &directory) {
   auto hDirExpected = OpenDirectoryHandle(directory);
+
   if (!hDirExpected) {
     std::cout << "Failed to open directory. Error: " << hDirExpected.error()
               << "\n";
     return;
+  } else {
+    std::cout << "Handle received from CreateFileW\n";
   }
-
   HANDLE hDir = hDirExpected.value();
-  /*std::array<char, 1024> buffer;*/
-  /*DWORD bytesReturned;*/
-  /**/
-  /*while (ReadDirectoryChangesW(*/
-  /*    hDir, buffer.data(), static_cast<DWORD>(buffer.size()),*/
-  /*    FALSE, // Don't watch subdirectories*/
-  /*    FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE |*/
-  /*        FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_ATTRIBUTES,*/
-  /*    &bytesReturned, nullptr, nullptr)) {*/
-  /**/
-  /*  FILE_NOTIFY_INFORMATION *pNotify =*/
-  /*      reinterpret_cast<FILE_NOTIFY_INFORMATION *>(buffer.data());*/
-  /**/
-  /*  do {*/
-  /*    std::wstring filename_w(pNotify->FileName,*/
-  /*                            pNotify->FileNameLength / sizeof(WCHAR));*/
-  /*    PrintAction(pNotify->Action, filename_w);*/
-  /**/
-  /*    if (pNotify->NextEntryOffset == 0)*/
-  /*      break;*/
-  /*    pNotify = reinterpret_cast<FILE_NOTIFY_INFORMATION *>(*/
-  /*        reinterpret_cast<std::byte *>(pNotify) +
-   * pNotify->NextEntryOffset);*/
-  /*  } while (true);*/
-  /*}*/
+  std::array<char, 1024> buffer;
+  DWORD bytesReturned;
+
+  while (ReadDirectoryChangesW(
+      hDir, buffer.data(), static_cast<DWORD>(buffer.size()),
+      FALSE, // Don't watch subdirectories
+      FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE |
+          FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_ATTRIBUTES,
+      &bytesReturned, nullptr, nullptr)) {
+
+    FILE_NOTIFY_INFORMATION *pNotify =
+        reinterpret_cast<FILE_NOTIFY_INFORMATION *>(buffer.data());
+
+    /*std::wcout << "ReadDirectoryChangesW received change notification\n"*/
+    /*           << "FileName:" << *(pNotify->FileName) << "\n"*/
+    /*           << "FileLength: " << pNotify->FileNameLength << '\n'*/
+    /*           << "FileAction:  " << pNotify->Action << '\n';*/
+
+    do {
+      std::wstring filename_w(pNotify->FileName,
+                              pNotify->FileNameLength / sizeof(WCHAR));
+      PrintAction(pNotify->Action, filename_w);
+
+      if (pNotify->NextEntryOffset == 0)
+        break;
+      pNotify = reinterpret_cast<FILE_NOTIFY_INFORMATION *>(
+          reinterpret_cast<std::byte *>(pNotify) + pNotify->NextEntryOffset);
+    } while (true);
+  }
 
   std::cout << "Directory Reading successfull closing handle\n";
   CloseHandle(hDir);
@@ -97,7 +104,7 @@ void WatchDirectory(const std::wstring &directory) {
 
 int main() {
   constexpr std::wstring_view directory =
-      L"C:\\Users\\Vishal\\Documents\\workspace\\encrypter\\test";
+      L"C:\\Users\\Vishal\\Documents\\workspace\\encrypter\\test\\files";
 
   std::cout << "Watching file: " << TARGET_FILE << " in "
             << to_utf8(std::wstring(directory)) << "\n";

@@ -18,4 +18,13 @@ PS C:\msys64\ucrt64\lib> echo $env:CFLAGS
 PS C:\msys64\ucrt64\lib> echo $env:LDFLAGS
 -I C:\msys64\ucrt64\lib
 - 
-- Python version : 3.10.11 
+- Python version : 3.10.11
+
+------------------------------------
+
+- Observation in Windows for file watcher using neovim
+    * nvim creates a temporary file from original file and write data on it
+    * when we save using :write or :w it first deletes the original file
+    * then renames the temporary file to original file.
+    * this creates two events i.e delte and create. 
+        Try to avoid using neovim to edit the file we're wathing in windows.
