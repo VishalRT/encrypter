@@ -8,6 +8,33 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
 
+
+#OPENSSL
+##Helpers to find openssl and libs
+if(DEFINED ENV{OPENSSL_ROOT_DIR})
+    message(STATUS "Openssl root provided $ENV{OPENSSL_ROOT_DIR}")
+    set(OPENSSL_ROOT_DIR "$ENV{OPENSSL_ROOT_DIR}")
+else()
+    message(WARNING "Openssl root not provided in env variable")
+endif()
+
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL 3.4 REQUIRED)
+# Uncomment to Debug OpenSSL with CMake
+message(STATUS "OPENSSL FOUND ${OPENSSL_FOUND}")
+# message("Openssl Include ${OPENSSL_INCLUDE_DIR}")
+# message("Openssl version ${OPENSSL_VERSION}")
+# message("Openssl Libraries: ${OPENSSL_LIBRARIES}")
+
+#Windows, OpenSSL API inclusion
+add_compile_options("$ENV{CFLAGS}" "$ENV{CXXFLAGS}")
+link_directories("$ENV{LDFLAGS}")
+
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE kernel32 OpenSSL::Crypto)
+
+
 # TODO: Remove this once c++ 23 feature are fully available in clang
 # https://www.reddit.com/r/cpp/comments/1b6f3s4/comment/ktcxhha/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1
 # if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -17,13 +44,3 @@ set(CMAKE_CXX_COMPILER "clang++")
 #   )
 # endif()
 #
-
-
-
-#WIndows API inclusion
-add_compile_options("$ENV{CFLAGS}" "$ENV{CXXFLAGS}")
-link_directories("$ENV{LDFLAGS}")
-
-add_executable(${PROJECT_NAME} src/main.cpp)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE kernel32)

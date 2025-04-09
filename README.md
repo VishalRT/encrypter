@@ -5,6 +5,7 @@
 - When to encrypt and decrypt to make the file available to user ?
 - Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ? 
 - Removed verbose log to build system, make it optional later
+- Remove CXX and LDFLags and check if openssl is found ? 
 
 
 
@@ -12,12 +13,17 @@
 PREREQUISTE
 - Add windows sdk include and lib in  CFLAGS , CXXFLAGS, LDFLAGS
     PS C:\msys64\ucrt64\lib> echo $env:CXXFLAGS
--I C:\msys64\ucrt64\include
-PS C:\msys64\ucrt64\lib> echo $env:CFLAGS
--I C:\msys64\ucrt64\include
-PS C:\msys64\ucrt64\lib> echo $env:LDFLAGS
--I C:\msys64\ucrt64\lib
-- 
+    -I C:\msys64\ucrt64\include
+    PS C:\msys64\ucrt64\lib> echo $env:CFLAGS
+    -I C:\msys64\ucrt64\include
+    PS C:\msys64\ucrt64\lib> echo $env:LDFLAGS
+    -I C:\msys64\ucrt64\lib
+- OpenSSL 3.4.1 11 Feb 2025 (Library: OpenSSL 3.4.1 11 Feb 2025)
+- I am using openssl in mingw. 
+  SO the above CXX and LD Flags will give me the ssl libs.
+  I've included OPENSSL_ROOT_DIR in CMake for helping it find OpenSSL.
+  Set the same(OPENSSL_ROOT_DIR ) environment variable which is root directory of installation
+  Note: bin directory might not be root directory of installation
 - Python version : 3.10.11
 
 ------------------------------------

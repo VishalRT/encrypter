@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <windows.h>
+#include <openssl/evp.h>
 
 std::string to_utf8(const std::wstring &wstr)
 {
@@ -18,7 +19,7 @@ std::string to_utf8(const std::wstring &wstr)
 }
 
 constexpr std::string_view TARGET_FILE = "test.txt";
-̥
+
 void PrintAction(DWORD action, const std::wstring &filename_w)
 {
   std::string filename = to_utf8(filename_w);
@@ -113,6 +114,9 @@ void WatchDirectory(const std::wstring &directory)
 
 int main()
 {
+  OpenSSL_add_all_algorithms();
+  std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << "\n";
+
   constexpr std::wstring_view directory =
       L"C:\\Users\\Vishal\\Documents\\workspace\\encrypter\\test\\files";
 
