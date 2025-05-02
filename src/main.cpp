@@ -18,12 +18,12 @@ std::string to_utf8(const std::wstring &wstr)
   return str;
 }
 
-constexpr std::string_view TARGET_FILE = "test.txt";
+std::string_view target_file = "test.txt";
 
 void PrintAction(DWORD action, const std::wstring &filename_w)
 {
   std::string filename = to_utf8(filename_w);
-  if (filename != TARGET_FILE)
+  if (filename != target_file)
     return;
 
   switch (action)
@@ -90,10 +90,14 @@ void WatchDirectory(const std::wstring &directory)
     FILE_NOTIFY_INFORMATION *pNotify =
         reinterpret_cast<FILE_NOTIFY_INFORMATION *>(buffer.data());
 
-    std::wcout << "ReadDirectoryChangesW received change notification\n"
-               << "FileName:" << *(pNotify->FileName) << "\n"
-               << "FileLength: " << pNotify->FileNameLength << '\n'
-               << "FileAction:  " << pNotify->Action << '\n';
+    std::wcout  << "ReadDirectoryChangesW received change notification\n"
+                << "FileName: ";
+
+    for(WCHAR c : pNotify->FileName)
+      std::wcout << c;
+
+      std::wcout << "FileNameLength: " << pNotify->FileNameLength << '\n'
+                << "FileAction:  " << pNotify->Action << '\n';
 
     do
     {
@@ -120,7 +124,7 @@ int main()
   constexpr std::wstring_view directory =
       L"C:\\Users\\Vishal\\Documents\\workspace\\encrypter\\test\\files";
 
-  std::cout << "Watching file: " << TARGET_FILE << " in "
+  std::cout << "Watching file: " << target_file << " in "
             << to_utf8(std::wstring(directory)) << "\n";
 
   WatchDirectory(std::wstring(directory));
