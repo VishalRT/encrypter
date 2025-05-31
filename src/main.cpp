@@ -23,8 +23,8 @@ std::string_view target_file = "test.txt";
 void PrintAction(DWORD action, const std::wstring &filename_w)
 {
   std::string filename = to_utf8(filename_w);
-  if (filename != target_file)
-    return;
+  // if (filename != target_file)
+  //   return;
 
   switch (action)
   {
@@ -42,6 +42,7 @@ void PrintAction(DWORD action, const std::wstring &filename_w)
     break;
   case FILE_ACTION_RENAMED_NEW_NAME:
     std::cout << "File Renamed (New Name): " << filename << "\n";
+    target_file = filename;
     break;
   default:
     std::cout << "Unknown Action: " << filename << "\n";
@@ -93,10 +94,10 @@ void WatchDirectory(const std::wstring &directory)
     std::wcout  << "ReadDirectoryChangesW received change notification\n"
                 << "FileName: ";
 
-    for(WCHAR c : pNotify->FileName)
-      std::wcout << c;
+    for (DWORD i = 0; i < pNotify->FileNameLength / sizeof(WCHAR); ++i)
+      std::wcout << pNotify->FileName[i];
 
-      std::wcout << "FileNameLength: " << pNotify->FileNameLength << '\n'
+      std::wcout << "\nFileNameLength: " << (pNotify->FileNameLength / sizeof(WCHAR)) << '\n'
                 << "FileAction:  " << pNotify->Action << '\n';
 
     do
