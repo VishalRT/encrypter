@@ -8,6 +8,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
+
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 #OPENSSL
 ##Helpers to find openssl and libs
@@ -43,4 +48,3 @@ target_link_libraries(${PROJECT_NAME} PRIVATE kernel32 OpenSSL::Crypto)
 #     -stdlib=libstdc++ -D__cpp_concepts=202002 -Wno-builtin-macro-redefined
 #   )
 # endif()
-#
