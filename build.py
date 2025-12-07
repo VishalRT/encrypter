@@ -112,7 +112,7 @@ def main():
         type=lambda s: BuildAction(s.lower()),
         choices=list(BuildAction),
         default=BuildAction.CLEAN_BUILD,
-        help="Build action: build (incremental), clean-build (cmake clean + build), fresh (delete build dir + build)"
+        help="Build action: build (incremental), clean-build (cmake clean + build), fresh (clean build dir + build)"
     )
     parser.add_argument(
         "--build-type",

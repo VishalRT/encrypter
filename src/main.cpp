@@ -4,7 +4,149 @@
 #include <optional>
 #include <string>
 #include <windows.h>
+#include <conio.h>
+#include <fstream>
+#include <vector>
 #include <openssl/evp.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
+
+namespace {
+constexpr size_t SALT_SIZE = 16;
+constexpr size_t KEY_SIZE = 32; // AES-256
+constexpr size_t IV_SIZE = 16;
+constexpr int PBKDF2_ITERS = 100000;
+const char MAGIC[] = "ENCRYPv1"; // 8 bytes
+}
+
+static void print_openssl_error()
+{
+  unsigned long err = ERR_get_error();
+  if (err) {
+    char buf[256];
+    ERR_error_string_n(err, buf, sizeof(buf));
+    std::cerr << "OpenSSL error: " << buf << "\n";
+  }
+}
+
+static std::string prompt_password(const char *prompt)
+{
+  std::cout << prompt << " (input hidden): ";
+    std::string pwd;
+    int ch;
+  while ((ch = _getch()) != '\r') {
+    if (ch == '\b') {
+      if (!pwd.empty()) { pwd.pop_back(); std::cout << "\b \b"; }
+    // Ctrl+C (ASCII 3) pressed: handle user interruption
+        } else if (ch == 3) {
+          std::cout << "\n"; exit(1);
+        } else {
+          pwd.push_back(static_cast<char>(ch)); std::cout << '*';
+        }
+  }
+  std::cout << "\n";
+  return pwd;
+}
+
+static bool derive_key_iv(const std::string &password, const std::vector<unsigned char> &salt,
+                          std::vector<unsigned char> &key, std::vector<unsigned char> &iv)
+{
+  std::vector<unsigned char> buf(KEY_SIZE + IV_SIZE);
+  const EVP_MD *md = EVP_sha256();
+  if (!PKCS5_PBKDF2_HMAC(password.c_str(), static_cast<int>(password.size()),
+                         salt.data(), static_cast<int>(salt.size()), PBKDF2_ITERS,
+                         md, static_cast<int>(buf.size()), buf.data())) {
+    print_openssl_error();
+    return false;
+  }
+  key.assign(buf.begin(), buf.begin() + KEY_SIZE);
+  iv.assign(buf.begin() + KEY_SIZE, buf.begin() + KEY_SIZE + IV_SIZE);
+  return true;
+}
+
+static int encrypt_file_stream(const std::string &inpath, const std::string &outpath, const std::string &password)
+{
+  std::ifstream infile(inpath, std::ios::binary);
+  if (!infile) { std::cerr << "Failed to open source file: " << inpath << "\n"; return 1; }
+  
+  std::ofstream outfile(outpath, std::ios::binary);
+  if (!outfile) { std::cerr << "Failed to open destination file: " << outpath << "\n"; return 1; }
+
+  std::vector<unsigned char> salt(SALT_SIZE);
+  if (RAND_bytes(salt.data(), static_cast<int>(salt.size())) != 1) {
+    std::cerr << "Failed to generate salt\n"; print_openssl_error(); return 1;
+  }
+
+  std::vector<unsigned char> key, iv;
+  if (!derive_key_iv(password, salt, key, iv)) { std::cerr << "Key derivation failed\n"; return 1; }
+
+  // write header: MAGIC + salt
+  outfile.write(MAGIC, sizeof(MAGIC)-1);
+  outfile.write(reinterpret_cast<const char *>(salt.data()), static_cast<std::streamsize>(salt.size()));
+
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  if (!ctx) { std::cerr << "EVP_CIPHER_CTX_new failed\n"; return 1; }
+  if (EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv.data()) != 1) {
+    std::cerr << "EVP_EncryptInit_ex failed\n"; print_openssl_error(); EVP_CIPHER_CTX_free(ctx); return 1; }
+
+  const size_t BUFSIZE = 4096;
+  std::vector<unsigned char> inbuf(BUFSIZE);
+  std::vector<unsigned char> outbuf(BUFSIZE + EVP_CIPHER_block_size(EVP_aes_256_cbc()));
+
+  while (infile) {
+    std::streamsize read_bytes = infile.gcount();
+    infile.read(reinterpret_cast<char *>(inbuf.data()), static_cast<std::streamsize>(inbuf.size()));
+    if (read_bytes > 0) {
+      int outlen = 0;
+      if (EVP_EncryptUpdate(ctx, outbuf.data(), &outlen, inbuf.data(), static_cast<int>(read_bytes)) != 1) {
+        std::cerr << "EVP_EncryptUpdate failed\n"; print_openssl_error(); EVP_CIPHER_CTX_free(ctx); return 1; }
+      outfile.write(reinterpret_cast<const char *>(outbuf.data()), outlen);
+    }
+  }
+
+  int tmplen = 0;
+  if (EVP_EncryptFinal_ex(ctx, outbuf.data(), &tmplen) != 1) { std::cerr << "EVP_EncryptFinal_ex failed\n"; print_openssl_error(); EVP_CIPHER_CTX_free(ctx); return 1; }
+  if (tmplen > 0) outfile.write(reinterpret_cast<const char *>(outbuf.data()), tmplen);
+  EVP_CIPHER_CTX_free(ctx);
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
+  OpenSSL_add_all_algorithms();
+  ERR_load_crypto_strings();
+
+  std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << "\n";
+
+  // If the user passed source and destination files, perform encryption using the new function
+  if (argc == 3) {
+    std::string src = argv[1];
+    std::string dst = argv[2];
+    std::string pwd = prompt_password("Enter password");
+    if (pwd.empty()) { std::cerr << "Empty password not allowed\n"; return 1; }
+    int rc = encrypt_file_stream(src, dst, pwd);
+    EVP_cleanup();
+    ERR_free_strings();
+    if (rc == 0) std::cout << "Encryption completed: " << dst << "\n";
+    return rc;
+  } else {
+    std::cout << "Usage: encrypter <source_file > <destination_file>\n";
+  }
+
+  /* Commenting Service for now. Need to keep it simple for start
+  OpenSSL_add_all_algorithms();
+  constexpr std::wstring_view directory =
+      L"C:\\Users\\Vishal\\Documents\\workspace\\encrypter\\test\\files";
+
+  std::cout << "Watching file: " << target_file << " in "
+            << to_utf8(std::wstring(directory)) << "\n";
+
+  // WatchDirectory(std::wstring(directory));
+  */
+  return 0;
+}
+
+////SERVICE LOGIC BELOW To be used later
 
 std::string to_utf8(const std::wstring &wstr)
 {
@@ -117,16 +259,3 @@ void WatchDirectory(const std::wstring &directory)
   CloseHandle(watchDirHandle);
 }
 
-int main()
-{
-  OpenSSL_add_all_algorithms();
-  std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << "\n";
-
-  constexpr std::wstring_view directory =
-      L"C:\\Users\\Vishal\\Documents\\workspace\\encrypter\\test\\files";
-
-  std::cout << "Watching file: " << target_file << " in "
-            << to_utf8(std::wstring(directory)) << "\n";
-
-  WatchDirectory(std::wstring(directory));
-}
