@@ -7,9 +7,13 @@
 #include <conio.h>
 #include <fstream>
 #include <vector>
+#include <filesystem>
+
+////////////////////////////////////////////////////////////////////////////////////////////
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace {
 constexpr size_t SALT_SIZE = 16;
@@ -87,15 +91,16 @@ static int encrypt_file_stream(const std::string &inpath, const std::string &out
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
   if (!ctx) { std::cerr << "EVP_CIPHER_CTX_new failed\n"; return 1; }
   if (EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv.data()) != 1) {
-    std::cerr << "EVP_EncryptInit_ex failed\n"; print_openssl_error(); EVP_CIPHER_CTX_free(ctx); return 1; }
+    std::cerr << "EVP_EncryptInit_ex failed\n"; print_openssl_error(); EVP_CIPHER_CTX_free(ctx); return 1; 
+  }
 
   const size_t BUFSIZE = 4096;
   std::vector<unsigned char> inbuf(BUFSIZE);
   std::vector<unsigned char> outbuf(BUFSIZE + EVP_CIPHER_block_size(EVP_aes_256_cbc()));
 
   while (infile) {
+    infile.read(reinterpret_cast<char *>(inbuf.data()), BUFSIZE);
     std::streamsize read_bytes = infile.gcount();
-    infile.read(reinterpret_cast<char *>(inbuf.data()), static_cast<std::streamsize>(inbuf.size()));
     if (read_bytes > 0) {
       int outlen = 0;
       if (EVP_EncryptUpdate(ctx, outbuf.data(), &outlen, inbuf.data(), static_cast<int>(read_bytes)) != 1) {
@@ -111,43 +116,6 @@ static int encrypt_file_stream(const std::string &inpath, const std::string &out
   return 0;
 }
 
-int main(int argc, char **argv)
-{
-  OpenSSL_add_all_algorithms();
-  ERR_load_crypto_strings();
-
-  std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << "\n";
-
-  // If the user passed source and destination files, perform encryption using the new function
-  if (argc == 3) {
-    std::string src = argv[1];
-    std::string dst = argv[2];
-    std::string pwd = prompt_password("Enter password");
-    if (pwd.empty()) { std::cerr << "Empty password not allowed\n"; return 1; }
-    int rc = encrypt_file_stream(src, dst, pwd);
-    EVP_cleanup();
-    ERR_free_strings();
-    if (rc == 0) std::cout << "Encryption completed: " << dst << "\n";
-    return rc;
-  } else {
-    std::cout << "Usage: encrypter <source_file > <destination_file>\n";
-  }
-
-  /* Commenting Service for now. Need to keep it simple for start
-  OpenSSL_add_all_algorithms();
-  constexpr std::wstring_view directory =
-      L"C:\\Users\\Vishal\\Documents\\workspace\\encrypter\\test\\files";
-
-  std::cout << "Watching file: " << target_file << " in "
-            << to_utf8(std::wstring(directory)) << "\n";
-
-  // WatchDirectory(std::wstring(directory));
-  */
-  return 0;
-}
-
-////SERVICE LOGIC BELOW To be used later
-
 std::string to_utf8(const std::wstring &wstr)
 {
   if (wstr.empty())
@@ -160,38 +128,17 @@ std::string to_utf8(const std::wstring &wstr)
   return str;
 }
 
-std::string_view target_file = "test.txt";
-
-void PrintAction(DWORD action, const std::wstring &filename_w)
+std::wstring to_wstring(const std::string& str)
 {
-  std::string filename = to_utf8(filename_w);
-  // if (filename != target_file)
-  //   return;
-
-  switch (action)
-  {
-  case FILE_ACTION_ADDED:
-    std::cout << "File Created: " << filename << "\n";
-    break;
-  case FILE_ACTION_REMOVED:
-    std::cout << "File Deleted: " << filename << "\n";
-    break;
-  case FILE_ACTION_MODIFIED:
-    std::cout << "File Modified: " << filename << "\n";
-    break;
-  case FILE_ACTION_RENAMED_OLD_NAME:
-    std::cout << "File Renamed (Old Name): " << filename << "\n";
-    break;
-  case FILE_ACTION_RENAMED_NEW_NAME:
-    std::cout << "File Renamed (New Name): " << filename << "\n";
-    target_file = filename;
-    break;
-  default:
-    std::cout << "Unknown Action: " << filename << "\n";
-  }
+    if (str.empty())
+        return {};
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+    std::wstring wstr(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstr[0], size_needed);
+    return wstr;
 }
 
-std::optional<HANDLE> OpenDirectoryHandle(const std::wstring &directory)
+static std::optional<HANDLE> OpenDirectoryHandle(const std::wstring &directory)
 {
   HANDLE dirHandle = CreateFileW(
       directory.c_str(), FILE_LIST_DIRECTORY,
@@ -206,47 +153,55 @@ std::optional<HANDLE> OpenDirectoryHandle(const std::wstring &directory)
   return dirHandle;
 }
 
-void WatchDirectory(const std::wstring &directory)
+static void WatchDirectory(const std::string &source_path, const std::string &dest_path, const std::string &password)
 {
-  auto hDirOpt = OpenDirectoryHandle(directory);
+  std::filesystem::path src_path_fs = source_path;
+  std::wstring dir_to_watch = src_path_fs.parent_path().wstring();
+  std::wstring file_to_watch = src_path_fs.filename().wstring();
+
+  auto hDirOpt = OpenDirectoryHandle(dir_to_watch);
   if (!hDirOpt.has_value())
   {
-    std::cout << "Failed to open directory. Error: " << GetLastError() << "\n";
+    std::cerr << "Failed to open directory for watching. Error: " << GetLastError() << "\n";
     return;
   }
-
-  std::cout << "Handle received from CreateFileW\n";
   HANDLE watchDirHandle = hDirOpt.value();
+  std::cout << "Watching for changes in " << to_utf8(dir_to_watch) << "\n";
 
-  std::array<char, 1024> buffer;
+  std::array<char, 2048> buffer;
   DWORD bytesReturned;
 
   while (ReadDirectoryChangesW(
       watchDirHandle, buffer.data(), static_cast<DWORD>(buffer.size()),
       FALSE, // Don't watch subdirectories
-      FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE |
-          FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_ATTRIBUTES |
-          FILE_NOTIFY_CHANGE_CREATION,
+      FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME,
       &bytesReturned, nullptr, nullptr))
   {
-
     FILE_NOTIFY_INFORMATION *pNotify =
         reinterpret_cast<FILE_NOTIFY_INFORMATION *>(buffer.data());
 
-    std::wcout  << "ReadDirectoryChangesW received change notification\n"
-                << "FileName: ";
-
-    for (DWORD i = 0; i < pNotify->FileNameLength / sizeof(WCHAR); ++i)
-      std::wcout << pNotify->FileName[i];
-
-      std::wcout << "\nFileNameLength: " << (pNotify->FileNameLength / sizeof(WCHAR)) << '\n'
-                << "FileAction:  " << pNotify->Action << '\n';
-
     do
     {
-      std::wstring filename_w(pNotify->FileName,
-                              pNotify->FileNameLength / sizeof(WCHAR));
-      PrintAction(pNotify->Action, filename_w);
+      std::wstring filename_w(pNotify->FileName, pNotify->FileNameLength / sizeof(WCHAR));
+
+      if (pNotify->Action == FILE_ACTION_MODIFIED && filename_w == file_to_watch)
+      {
+          std::cout << "File Modified: " << to_utf8(filename_w) << ". Re-encrypting...\n";
+          int rc = encrypt_file_stream(source_path, dest_path, password);
+          if (rc == 0) {
+              std::cout << "Encryption successful.\n";
+          } else {
+              std::cerr << "Encryption failed.\n";
+          }
+      } else if (pNotify->Action == FILE_ACTION_RENAMED_NEW_NAME && filename_w == file_to_watch) {
+          std::cout << "File Renamed to: " << to_utf8(filename_w) << ". Re-encrypting...\n";
+           int rc = encrypt_file_stream(source_path, dest_path, password);
+          if (rc == 0) {
+              std::cout << "Encryption successful.\n";
+          } else {
+              std::cerr << "Encryption failed.\n";
+          }
+      }
 
       if (pNotify->NextEntryOffset == 0)
         break;
@@ -255,7 +210,54 @@ void WatchDirectory(const std::wstring &directory)
     } while (true);
   }
 
-  std::cout << "Directory reading complete, closing handle\n";
+  std::cout << "\n Closing Handle" << std::endl;
   CloseHandle(watchDirHandle);
 }
 
+
+int main(int argc, char **argv)
+{
+  OpenSSL_add_all_algorithms();
+  ERR_load_crypto_strings();
+
+  std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << "\n";
+
+  if (argc == 4 && std::string(argv[1]) == "--watch") {
+    std::string src = argv[2];
+    std::string dst = argv[3];
+    std::string pwd = prompt_password("Enter password for watch mode");
+    if (pwd.empty()) { std::cerr << "Empty password not allowed\n"; return 1; }
+
+    // Initial encryption
+    std::cout << "Performing initial encryption...\n";
+    int rc = encrypt_file_stream(src, dst, pwd);
+    if (rc == 0) {
+        std::cout << "Initial encryption completed: " << dst << "\n";
+    } else {
+        std::cerr << "Initial encryption failed.\n";
+        // We can still start watching, maybe the file will be created later
+    }
+    
+    WatchDirectory(src, dst, pwd);
+    
+    EVP_cleanup();
+    ERR_free_strings();
+    return 0;
+
+  } else if (argc == 4 && std::string(argv[1]) == "--file") {
+    std::string src = argv[2];
+    std::string dst = argv[3];
+    std::string pwd = prompt_password("Enter password");
+    if (pwd.empty()) { std::cerr << "Empty password not allowed\n"; return 1; }
+    int rc = encrypt_file_stream(src, dst, pwd);
+    EVP_cleanup();
+    ERR_free_strings();
+    if (rc == 0) std::cout << "Encryption completed: " << dst << "\n";
+    return rc;
+  } else {
+    std::cout << "Usage for one-time encryption: encrypter --file <source_file> <destination_file>\n";
+    std::cout << "Usage for watch mode: encrypter --watch <source_file> <destination_file>\n";
+  }
+
+  return 0;
+}
