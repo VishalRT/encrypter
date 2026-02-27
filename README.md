@@ -17,7 +17,6 @@
 - GUI - Maybe last when most of the things are completed 
 
 ----------------------------------------------------------------------------------------------------------------------------------------
-# C++ CORE GUIDELINES ENFORCEMENT
 
 ## Overview
 This project enforces C++ Core Guidelines naming conventions and layout rules using clangd for real-time VS Code integration.
@@ -50,19 +49,28 @@ https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-philosophy
 ## Build-time Enforcement
 - `.clang-tidy` file configured for naming rules
 - **VS Code Intellisense**: VS Code with clangd extension
+- **Conditional Build**: `python build.py --build-action rebuild --clang-tidy-check` (only when flag passed)
+- **CMake Target**: `cmake --build build --target clang-tidy-check` (only when enabled)
+- **Manual**: `clang-tidy src/main.cpp --checks='readability-identifier-naming'`
 
-**Conditional Build Process:**
-1. **CMake Configuration**: `cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -S . -B build`
-   - Adds `-DENABLE_CLANG_TIDY_CHECKS=ON` only when `--clang-tidy-check` flag is passed
-2. **clang-tidy Checks** (only when requested): `cmake --build build --target clang-tidy-check`
+**Build Actions:**
+- **rebuild**: Normal incremental build
+- **clean**: Clean build targets then rebuild  
+- **fresh**: Complete rebuild with fresh configuration
 
 **Usage Examples:**
 ```bash
-# Build with naming checks
-python build.py --build-action build --clang-tidy-check
+# Rebuild with naming checks
+python build.py --build-action rebuild --clang-tidy-check
 
-# Build without naming checks (default)
-python build.py --build-action build
+# Clean build without naming checks
+python build.py --build-action clean
+
+# Fresh build with naming checks
+python build.py --build-action fresh --clang-tidy-check
+
+# Fresh build without naming checks
+python build.py --build-action fresh --build-type debug
 ``` 
 
 
@@ -115,6 +123,7 @@ export LDFLAGS="-L /usr/local/lib"
 # BUILD
 ## Debugging build script available in launch.json file
 - Keybindings for build using vscode tasks
+```
     Path:
       Win: C:\Users\<YourUsername>\AppData\Roaming\Code\User\keybindings.json
       MacOS: ~/Library/Application Support/Code/User/keybindings.json
@@ -138,7 +147,7 @@ export LDFLAGS="-L /usr/local/lib"
           "args": "Encrypter Fresh Rebuild"
         }
       ]
-
+```
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

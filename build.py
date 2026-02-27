@@ -32,8 +32,8 @@ class BuildType(Enum):
             return "Release"
 
 class BuildAction(Enum):
-    BUILD = "build"
-    CLEAN_BUILD = "clean-build"
+    REBUILD = "rebuild"
+    CLEAN = "clean"
     FRESH = "fresh"
 
 def run_cmd(cmd):
@@ -46,21 +46,10 @@ def clean():
     run_cmd(cmd)
     print("----------- CMake Clean Done -------------")
 
-def fresh():
-    print("----------- Cleaning Build Directory --------------")
-
-    if os.path.exists(OUTPUT_DIR):
-        shutil.rmtree(OUTPUT_DIR)
-        os.mkdir(OUTPUT_DIR)
-    else:
-        print("Build Directory Already Clean!")
-
-
 def build(build_type, args):
-    print("----------- Starting Build --------------")
+    print("----------- Starting CmakeConfig Generation --------------")
     build_type_str = build_type.to_cmake() if isinstance(build_type, BuildType) else str(build_type)
     
-    # CMake configuration command
     config_cmd = f'cmake -G "MinGW Makefiles" \
             -DCMAKE_BUILD_TYPE={build_type_str} \
             -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
@@ -72,13 +61,18 @@ def build(build_type, args):
     # For Ninja Build System in case required in future
     # cmake -G "Ninja Multi-Config" -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe -S . -B build/
     
+    if hasattr(args, 'fresh') and args.fresh:
+        config_cmd += ' --fresh'
+
     # Add clang-tidy option if requested
     if hasattr(args, 'clang_tidy_check') and args.clang_tidy_check:
-        config_cmd += ' -DENABLE_CLANG_TIDY_CHECKS=ON'
+        config_cmd += ' -DENABLE_CLANG_TIDY_CHECKS:BOOL=ON'
     
     # Run CMake configuration first
     run_cmd(config_cmd)
-    print("CMake Completed, Build Files Generated!")
+    print("CMake Configuration Completed, Build Files Generated!")
+    print("----------- CMake Config Finished --------------")
+    print("----------- Starting Build --------------")
     
     # Then build project
     build_cmd = f'cmake --build {OUTPUT_DIR}'
@@ -86,6 +80,10 @@ def build(build_type, args):
     # Run clang-tidy if --clang-tidy-check is passed as argument
     if hasattr(args, 'clang_tidy_check') and args.clang_tidy_check:
         build_cmd += ' --target clang-tidy-check'
+    
+    # Add clean-first if fresh build
+    if hasattr(args, 'fresh') and args.fresh:
+        build_cmd += ' --clean-first'
 
     run_cmd(build_cmd)
     print("----------- Build Finished --------------")
@@ -97,24 +95,26 @@ def help():
     help_text = '''\
 --------------- Python CMake Build Helper ---------------
 Usage:
-  python build.py [--build-action {build,clean-build,fresh}] [--build-type {debug,release,relwithdebinfo}] [--clang-tidy-check]
+  python build.py [--build-action {rebuild,clean,fresh}] [--build-type {debug,release,relwithdebinfo}] [--clang-tidy-check]
 
 Options:
   --build-action    Build action to perform:
-                     - build        : Do only a build (incremental)
-                     - clean-build  : CMake clean then build
-                     - fresh        : Clean build dir + build
-  --build-type      CMake build type:
-                     - debug        : Debug build (default: release)
-                     - release      : Release build
-                     - relwithdebinfo : Release with debug info
+                     - rebuild          : Normal incremental build
+                     - clean            : Clean build targets then rebuild
+                     - fresh            : Complete build directory cleanup with fresh build
+
+  --build-type      CMake build type    :
+                     - debug            : Debug build (default: release)
+                     - release          : Release build
+                     - relwithdebinfo   : Release with debug info
+
   --clang-tidy-check Run clang-tidy checks during build.
 
 Examples:
-  python build.py --build-action build --build-type debug
-  python build.py --build-action clean-build --build-type release
+  python build.py --build-action rebuild --build-type debug
+  python build.py --build-action clean --build-type release
   python build.py --build-action fresh --build-type relwithdebinfo
-  python build.py --build-action build --clang-tidy-check
+  python build.py --build-action fresh --clang-tidy-check
 
 --------------- Python CMake Build Helper ---------------
 '''
@@ -127,8 +127,8 @@ def main():
         "--build-action",
         type=lambda s: BuildAction(s.lower()),
         choices=list(BuildAction),
-        default=BuildAction.CLEAN_BUILD,
-        help="Build action: build (incremental), clean-build (cmake clean + build), fresh (clean build dir + build)"
+        default=BuildAction.CLEAN,
+        help="Build action: rebuild (incremental), clean (cmake clean + build), fresh (cleanup & build)"
     )
     parser.add_argument(
         "--build-type",
@@ -151,12 +151,13 @@ def main():
         sys.exit(1)
 
     print("----------- Starting Python Script --------------")
-    if args.build_action == BuildAction.BUILD:
+    if args.build_action == BuildAction.REBUILD:
         build(args.build_type, args)
-    elif args.build_action == BuildAction.CLEAN_BUILD:
+    elif args.build_action == BuildAction.CLEAN:
         clean()
         build(args.build_type, args)
     elif args.build_action == BuildAction.FRESH:
+        args.fresh = True  # Add fresh attribute to args
         fresh()
         build(args.build_type, args)
 
