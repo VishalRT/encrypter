@@ -1,17 +1,20 @@
 # TODO
-- handle closeHandle on abrupt close of exe (ctrl + c?)
 - user mr bjarnes guidelines from github to enforce best practices on identifiers - DONE
-- implement cmake --fresh option, CMAKE_GENERATOR env variable as flag to select build generator(ninja or make)
+- implement cmake --fresh option - DONE
 - Make CLI first then lets move to the service logic part.- DONE
-- Service implementation, we should be able to observe file changes from service
-- Installation and initiazion of service in windows
-- Implementaiton in other OS, Linux and MacOScls
-- stop at cmake if there's any issue with it during build
-- capture delta of file
+- Service implementation, we should be able to observe file changes from service - DONE
+- FileRename not working fix - InProgress
 - encrypt file to specific destination
 - decrypt file and open using windows/default app
 - When to encrypt and decrypt to make the file available to user ?
-- Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ? 
+- capture delta of file
+- handle closeHandle on abrupt close of exe (ctrl + c?)
+- OOP's apply properly
+- Installation and initiazion of service in windows
+- Implementaiton in other OS, Linux and MacOScls
+- Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ?
+- CMAKE_GENERATOR env variable as flag to select build generator(ninja or make)
+- stop at cmake if there's any issue with it during build
 - Removed verbose log to build system, make it optional later
 - Remove CXX and LDFLags and check if openssl is found ? 
 - GUI - Maybe last when most of the things are completed 
