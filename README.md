@@ -44,57 +44,72 @@ https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-philosophy
 
 ## VS Code Setup
 1. Install clangd extension from VS Code Marketplace
-2. Create `settings.json` in workspace root (already created):
-```json
-{
-    "C_Cpp.default.configurationProvider": "clangd",
-    "clangd.arguments": [
-        "--background-index",
-        "--clang-tidy",
-        "--header-insertion=never"
-    ],
-    "C_Cpp.codeAnalysis.enabled": true,
-    "C_Cpp.codeAnalysis.clangTidy.fallbackConfig": {
-        "Checks": "-*,readability-identifier-naming",
-        "CheckOptions": [
-            {"key": "readability-identifier-naming.FunctionCase", "value": "snake_case"},
-            {"key": "readability-identifier-naming.VariableCase", "value": "snake_case"},
-            {"key": "readability-identifier-naming.ConstantCase", "value": "UPPER_CASE"},
-            {"key": "readability-identifier-naming.ParameterCase", "value": "snake_case"},
-            {"key": "readability-identifier-naming.ClassCase", "value": "PascalCase"},
-            {"key": "readability-identifier-naming.StructCase", "value": "PascalCase"},
-            {"key": "readability-identifier-naming.EnumCase", "value": "PascalCase"},
-            {"key": "readability-identifier-naming.MemberCase", "value": "snake_case"},
-            {"key": "readability-identifier-naming.PrivateMemberSuffix", "value": "_"}
-        ]
-    }
-}
-```
-3. Restart VS Code
-4. Real-time naming violations will appear as squiggles and in Problems panel
+2. Create `settings.json` in workspace root (already created)
+3. Real-time naming violations will appear as squiggles and in Problems panel
 
 ## Build-time Enforcement
 - `.clang-tidy` file configured for naming rules
-- Run `clang-tidy` manually or via build for full analysis 
+- **VS Code Intellisense**: VS Code with clangd extension
+
+**Conditional Build Process:**
+1. **CMake Configuration**: `cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -S . -B build`
+   - Adds `-DENABLE_CLANG_TIDY_CHECKS=ON` only when `--clang-tidy-check` flag is passed
+2. **clang-tidy Checks** (only when requested): `cmake --build build --target clang-tidy-check`
+
+**Usage Examples:**
+```bash
+# Build with naming checks
+python build.py --build-action build --clang-tidy-check
+
+# Build without naming checks (default)
+python build.py --build-action build
+``` 
 
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------
 # PREREQUISTE
-- Add windows sdk include and lib in  CFLAGS , CXXFLAGS, LDFLAGS
-    PS C:\msys64\ucrt64\lib> echo $env:CXXFLAGS
-    -I C:\msys64\ucrt64\include
-    PS C:\msys64\ucrt64\lib> echo $env:CFLAGS
-    -I C:\msys64\ucrt64\include
-    PS C:\msys64\ucrt64\lib> echo $env:LDFLAGS
-    -I C:\msys64\ucrt64\lib
-- OpenSSL 3.4.1 11 Feb 2025 (Library: OpenSSL 3.4.1 11 Feb 2025)
-- I am using openssl in mingw. 
-  SO the above CXX and LD Flags will give me the ssl libs.
-  Included OPENSSL_ROOT_DIR in CMake for helping it find OpenSSL.
-  Set the same(OPENSSL_ROOT_DIR ) environment variable which is root directory of installation
-  Note: bin directory might not be root directory of installation
-- Python version : 3.10.11, Used for building the project.
+- **Clang 20.1.1** (C++23 compiler)
+- **OpenSSL 3.4.1** (Library: OpenSSL 3.4.1 11 Feb 2025)
+- **Python 3.10.11** (Build script)
+- **Windows SDK** (for Windows headers - auto-detected by clang)
+
+**Environment Setup:**
+
+**Windows PowerShell:**
+```powershell
+# Set OpenSSL root directory
+$env:OPENSSL_ROOT_DIR = "C:/path/to/openssl"
+
+# Optional: Set compiler flags (handled by CMake)
+$env:CFLAGS = "-I C:/msys64/ucrt64/include"
+$env:CXXFLAGS = "-I C:/msys64/ucrt64/include" 
+$env:LDFLAGS = "-L C:/msys64/ucrt64/lib"
+```
+
+**Windows CMD:**
+```cmd
+# Set OpenSSL root directory
+set OPENSSL_ROOT_DIR=C:/path/to/openssl
+
+# Optional: Set compiler flags (handled by CMake)
+set CFLAGS=-I C:/msys64/ucrt64/include
+set CXXFLAGS=-I C:/msys64/ucrt64/include
+set LDFLAGS=-L C:/msys64/ucrt64/lib
+```
+
+**Linux/macOS Bash:**
+```bash
+# Set OpenSSL root directory
+export OPENSSL_ROOT_DIR=/path/to/openssl
+
+# Optional: Set compiler flags (handled by CMake)
+export CFLAGS="-I /usr/local/include"
+export CXXFLAGS="-I /usr/local/include" 
+export LDFLAGS="-L /usr/local/lib"
+```
+
+**Note:** Using clang (not MSVC) - no Visual Studio paths needed. clang automatically finds standard library and Windows SDK headers.
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 # BUILD

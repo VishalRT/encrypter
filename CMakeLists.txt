@@ -39,6 +39,26 @@ add_executable(${PROJECT_NAME} src/main.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE kernel32 OpenSSL::Crypto)
 
+# C++ Core Guidelines enforcement with clang-tidy
+option(ENABLE_CLANG_TIDY_CHECKS "Enable clang-tidy naming checks" OFF)
+
+if(ENABLE_CLANG_TIDY_CHECKS)
+    find_program(CLANG_TIDY clang-tidy)
+    if(CLANG_TIDY)
+        message(STATUS "clang-tidy found: ${CLANG_TIDY}")
+        # Create custom target for clang-tidy checks
+        add_custom_target(clang-tidy-check
+            COMMAND ${CLANG_TIDY}
+                -checks="-*,readability-identifier-naming"
+                -p=${CMAKE_BINARY_DIR}
+                ${CMAKE_SOURCE_DIR}/src/main.cpp
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running clang-tidy naming checks"
+        )
+    else()
+        message(WARNING "clang-tidy not found - naming checks not available in build")
+    endif()
+endif()
 
 # TODO: Remove this once c++ 23 feature are fully available in clang
 # https://www.reddit.com/r/cpp/comments/1b6f3s4/comment/ktcxhha/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1

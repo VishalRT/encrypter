@@ -56,49 +56,65 @@ def fresh():
         print("Build Directory Already Clean!")
 
 
-def build(build_type):
+def build(build_type, args):
+    print("----------- Starting Build --------------")
     build_type_str = build_type.to_cmake() if isinstance(build_type, BuildType) else str(build_type)
-    print(f"----------- Starting Build [{build_type_str}] --------------")
-    cmd = f'cmake -G "MinGW Makefiles"  \
-            -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe \
+    
+    # CMake configuration command
+    config_cmd = f'cmake -G "MinGW Makefiles" \
             -DCMAKE_BUILD_TYPE={build_type_str} \
             -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
+    
     # Commenting Verbose command, enable based on options later
     # cmd = f'cmake -G \"MinGW Makefiles\" --trace-expand  \
     #         -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe \
     #         -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
     # For Ninja Build System in case required in future
     # cmake -G "Ninja Multi-Config" -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe -S . -B build/
-    run_cmd(cmd)
+    
+    # Add clang-tidy option if requested
+    if hasattr(args, 'clang_tidy_check') and args.clang_tidy_check:
+        config_cmd += ' -DENABLE_CLANG_TIDY_CHECKS=ON'
+    
+    # Run CMake configuration first
+    run_cmd(config_cmd)
     print("CMake Completed, Build Files Generated!")
+    
+    # Then build project
+    build_cmd = f'cmake --build {OUTPUT_DIR}'
 
-    # cmd = f'make -C {OUTPUT_DIR}'
-    #Alias to the above
-    cmd = f'cmake --build {OUTPUT_DIR}'
-    # cmd = f'cmake --build {OUTPUT_DIR} --verbose'
-    run_cmd(cmd)
+    # Run clang-tidy if --clang-tidy-check is passed as argument
+    if hasattr(args, 'clang_tidy_check') and args.clang_tidy_check:
+        build_cmd += ' --target clang-tidy-check'
+
+    run_cmd(build_cmd)
     print("----------- Build Finished --------------")
+    
+    
+    
 
 def help():
     help_text = '''\
 --------------- Python CMake Build Helper ---------------
 Usage:
-  python build.py [--build-action {build,clean-build,fresh}] [--build-type {debug,release,relwithdebinfo}]
+  python build.py [--build-action {build,clean-build,fresh}] [--build-type {debug,release,relwithdebinfo}] [--clang-tidy-check]
 
 Options:
   --build-action    Build action to perform:
                      - build        : Do only a build (incremental)
                      - clean-build  : CMake clean then build
-                     - fresh        : Clean the OUTPUT_DIR and then do a build
+                     - fresh        : Clean build dir + build
   --build-type      CMake build type:
                      - debug        : Debug build (default: release)
                      - release      : Release build
                      - relwithdebinfo : Release with debug info
+  --clang-tidy-check Run clang-tidy checks during build.
 
 Examples:
   python build.py --build-action build --build-type debug
   python build.py --build-action clean-build --build-type release
   python build.py --build-action fresh --build-type relwithdebinfo
+  python build.py --build-action build --clang-tidy-check
 
 --------------- Python CMake Build Helper ---------------
 '''
@@ -121,6 +137,7 @@ def main():
         default=BuildType.RELEASE,
         help="CMake build type: debug, release, relwithdebinfo (default: release)"
     )
+    parser.add_argument("--clang-tidy-check", action="store_true", help="Run clang-tidy checks.")
     parser.add_argument("-h", "--help", action="store_true", help="Show this help message and exit.")
     
     try:
@@ -135,13 +152,14 @@ def main():
 
     print("----------- Starting Python Script --------------")
     if args.build_action == BuildAction.BUILD:
-        build(args.build_type)
+        build(args.build_type, args)
     elif args.build_action == BuildAction.CLEAN_BUILD:
         clean()
-        build(args.build_type)
+        build(args.build_type, args)
     elif args.build_action == BuildAction.FRESH:
         fresh()
-        build(args.build_type)
+        build(args.build_type, args)
+
     print("---------- Python Script Ended ------------")
 
 if(__name__ == "__main__"):
