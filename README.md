@@ -1,8 +1,11 @@
 # TODO
-- user mr bjarnes guidelines from github to enforce best practices on identifiers - DONE
+- user mr stroustrup's guidelines from github to enforce best practices on identifiers - DONE
 - implement cmake --fresh option - DONE
 - Make CLI first then lets move to the service logic part.- DONE
 - Service implementation, we should be able to observe file changes from service - DONE
+- Implement RAII wrappers for OpenSSL and Windows handles
+- Use `std::expected` (C++23) for cleaner error handling
+- Use `SetConsoleCtrlHandler` for graceful shutdown on Windows
 - FileRename not working fix - InProgress
 - encrypt file to specific destination
 - decrypt file and open using windows/default app
@@ -10,6 +13,7 @@
 - capture delta of file
 - handle closeHandle on abrupt close of exe (ctrl + c?)
 - OOP's apply properly
+- Don't use string in password. check if strings are immutable in cpp as well
 - Installation and initiazion of service in windows
 - Implementaiton in other OS, Linux and MacOScls
 - Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ?
@@ -21,14 +25,57 @@
 
 ----------------------------------------------------------------------------------------------------------------------------------------
 
-## Overview
-This project enforces C++ Core Guidelines naming conventions and layout rules using clangd for real-time VS Code integration.
+# Overview
+This project enforces(somewhat) C++ Core Guidelines naming conventions and layout rules using clangd for real-time VS Code integration.
 https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-philosophy
 
-## Environment
-- **Clang version**: 20.1.1
+# PREREQUISTE
+- **Clang 20.1.1** (C++23 compiler)
+- **OpenSSL 3.4.1** (Library: OpenSSL 3.4.1 11 Feb 2025)
+- **Python 3.10.11** (Build script)
+- **Windows SDK** (for Windows headers - auto-detected by clang)
 - **VS Code Extension**: clangd with clang-tidy integration
 - **Configuration**: `.clang-tidy` file for naming rules
+
+# Environment Setup
+
+## Windows PowerShell:
+```powershell
+# Set OpenSSL root directory
+$env:OPENSSL_ROOT_DIR = "C:/path/to/openssl"
+
+# Optional: Set compiler flags (handled by CMake)
+$env:CFLAGS = "-I C:/msys64/ucrt64/include"
+$env:CXXFLAGS = "-I C:/msys64/ucrt64/include" 
+$env:LDFLAGS = "-L C:/msys64/ucrt64/lib"
+```
+
+## Windows CMD:
+```cmd
+# Set OpenSSL root directory
+set OPENSSL_ROOT_DIR=C:/path/to/openssl
+
+# Optional: Set compiler flags (handled by CMake)
+set CFLAGS=-I C:/msys64/ucrt64/include
+set CXXFLAGS=-I C:/msys64/ucrt64/include
+set LDFLAGS=-L C:/msys64/ucrt64/lib
+```
+
+## Linux/macOS Bash:
+```bash
+# Set OpenSSL root directory
+export OPENSSL_ROOT_DIR=/path/to/openssl
+
+# Optional: Set compiler flags (handled by CMake)
+export CFLAGS="-I /usr/local/include"
+export CXXFLAGS="-I /usr/local/include" 
+export LDFLAGS="-L /usr/local/lib"
+```
+
+## Note: Using clang (not MSVC) - no Visual Studio paths needed. clang automatically finds standard library and Windows SDK headers.
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
 
 ## Naming Conventions (C++ Core Guidelines NL Section)
 - **Functions**: `snake_case` (NL.10)
@@ -76,53 +123,6 @@ python build.py --build-action fresh --clang-tidy-check
 python build.py --build-action fresh --build-type debug
 ``` 
 
-
-
-----------------------------------------------------------------------------------------------------------------------------------------
-# PREREQUISTE
-- **Clang 20.1.1** (C++23 compiler)
-- **OpenSSL 3.4.1** (Library: OpenSSL 3.4.1 11 Feb 2025)
-- **Python 3.10.11** (Build script)
-- **Windows SDK** (for Windows headers - auto-detected by clang)
-
-**Environment Setup:**
-
-**Windows PowerShell:**
-```powershell
-# Set OpenSSL root directory
-$env:OPENSSL_ROOT_DIR = "C:/path/to/openssl"
-
-# Optional: Set compiler flags (handled by CMake)
-$env:CFLAGS = "-I C:/msys64/ucrt64/include"
-$env:CXXFLAGS = "-I C:/msys64/ucrt64/include" 
-$env:LDFLAGS = "-L C:/msys64/ucrt64/lib"
-```
-
-**Windows CMD:**
-```cmd
-# Set OpenSSL root directory
-set OPENSSL_ROOT_DIR=C:/path/to/openssl
-
-# Optional: Set compiler flags (handled by CMake)
-set CFLAGS=-I C:/msys64/ucrt64/include
-set CXXFLAGS=-I C:/msys64/ucrt64/include
-set LDFLAGS=-L C:/msys64/ucrt64/lib
-```
-
-**Linux/macOS Bash:**
-```bash
-# Set OpenSSL root directory
-export OPENSSL_ROOT_DIR=/path/to/openssl
-
-# Optional: Set compiler flags (handled by CMake)
-export CFLAGS="-I /usr/local/include"
-export CXXFLAGS="-I /usr/local/include" 
-export LDFLAGS="-L /usr/local/lib"
-```
-
-**Note:** Using clang (not MSVC) - no Visual Studio paths needed. clang automatically finds standard library and Windows SDK headers.
-
-------------------------------------------------------------------------------------------------------------------------------------------
 # BUILD
 ## Debugging build script available in launch.json file
 - Keybindings for build using vscode tasks

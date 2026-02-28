@@ -44,7 +44,7 @@ def clean():
     cmd=f'cmake --build {OUTPUT_DIR} --target clean' 
     # cmd=f'cmake --build {OUTPUT_DIR} --target clean VERBOSE=1'
     run_cmd(cmd)
-    print("----------- CMake Clean Done -------------")
+    print("----------- CMake Clean Done --------------")
 
 def build(build_type, args):
     print("----------- Starting CmakeConfig Generation --------------")
@@ -61,10 +61,14 @@ def build(build_type, args):
     # For Ninja Build System in case required in future
     # cmake -G "Ninja Multi-Config" -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe -S . -B build/
     
+    # Always export compile commands for clangd IntelliSense
+    config_cmd += ' -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON'
+
+    # clean cmake cache from build diretory
     if hasattr(args, 'fresh') and args.fresh:
         config_cmd += ' --fresh'
 
-    # Add clang-tidy option if requested
+    # Enable clang_tidy option in CMake File
     if hasattr(args, 'clang_tidy_check') and args.clang_tidy_check:
         config_cmd += ' -DENABLE_CLANG_TIDY_CHECKS:BOOL=ON'
     
@@ -72,8 +76,8 @@ def build(build_type, args):
     run_cmd(config_cmd)
     print("CMake Configuration Completed, Build Files Generated!")
     print("----------- CMake Config Finished --------------")
+
     print("----------- Starting Build --------------")
-    
     # Then build project
     build_cmd = f'cmake --build {OUTPUT_DIR}'
 
@@ -93,7 +97,7 @@ def build(build_type, args):
 
 def help():
     help_text = '''\
---------------- Python CMake Build Helper ---------------
+--------------- Python CMake Build Helper --------------
 Usage:
   python build.py [--build-action {rebuild,clean,fresh}] [--build-type {debug,release,relwithdebinfo}] [--clang-tidy-check]
 
@@ -116,7 +120,7 @@ Examples:
   python build.py --build-action fresh --build-type relwithdebinfo
   python build.py --build-action fresh --clang-tidy-check
 
---------------- Python CMake Build Helper ---------------
+--------------- Python CMake Build Helper --------------
 '''
     print(help_text)
 
@@ -158,10 +162,9 @@ def main():
         build(args.build_type, args)
     elif args.build_action == BuildAction.FRESH:
         args.fresh = True  # Add fresh attribute to args
-        fresh()
         build(args.build_type, args)
 
-    print("---------- Python Script Ended ------------")
+    print("---------- Python Script Ended --------------")
 
 if(__name__ == "__main__"):
     main()
