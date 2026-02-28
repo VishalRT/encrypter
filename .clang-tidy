@@ -1,21 +1,30 @@
 ---
 Checks: '-*,readability-identifier-naming'
 CheckOptions:
-  - key: readability-identifier-naming.FunctionCase
-    value: snake_case
-  - key: readability-identifier-naming.VariableCase
-    value: snake_case
+  # NL.8: Use all-uppercase names for macro-like entities
   - key: readability-identifier-naming.ConstantCase
     value: UPPER_CASE
-  - key: readability-identifier-naming.ParameterCase
-    value: snake_case
+  # NL.9: Prefer PascalCase for type names
   - key: readability-identifier-naming.ClassCase
     value: PascalCase
+  # NL.9: Prefer PascalCase for type names
   - key: readability-identifier-naming.StructCase
     value: PascalCase
+  # NL.9: Prefer PascalCase for type names
   - key: readability-identifier-naming.EnumCase
     value: PascalCase
+  # NL.10: Use snake_case for function names
+  - key: readability-identifier-naming.FunctionCase
+    value: snake_case
+  # NL.10: Use snake_case for variable names
+  - key: readability-identifier-naming.VariableCase
+    value: snake_case
+  # NL.10: Use snake_case for parameter names
+  - key: readability-identifier-naming.ParameterCase
+    value: snake_case
+  # NL.10: Use snake_case for member names
   - key: readability-identifier-naming.MemberCase
     value: snake_case
+  # NL.17: Use '_' as suffix for private members
   - key: readability-identifier-naming.PrivateMemberSuffix
     value: '_'
