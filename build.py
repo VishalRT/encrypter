@@ -50,16 +50,26 @@ def build(build_type, args):
     print("----------- Starting CmakeConfig Generation --------------")
     build_type_str = build_type.to_cmake() if isinstance(build_type, BuildType) else str(build_type)
     
-    config_cmd = f'cmake -G "MinGW Makefiles" \
-            -DCMAKE_BUILD_TYPE={build_type_str} \
-            -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
+    # Make with clang, enable based on options later
+    # config_cmd = f'cmake -G "MinGW Makefiles" \
+    #         -DCMAKE_BUILD_TYPE={build_type_str} \
+    #         -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
+
+    # Add to Make Files are using gcc/g++ instead of clang/clang++
+    # config_cmd += ' -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe'
     
-    # Commenting Verbose command, enable based on options later
+    # Ninja MultiConfig with verbose output, enable based on options later
     # cmd = f'cmake -G \"MinGW Makefiles\" --trace-expand  \
     #         -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe \
     #         -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
-    # For Ninja Build System in case required in future
     # cmake -G "Ninja Multi-Config" -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe -S . -B build/
+
+    # Ninja Cmd 
+    config_cmd = f'cmake -G "Ninja" \
+            -DCMAKE_BUILD_TYPE={build_type_str} \
+            -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
+
+    config_cmd += ' -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe'
     
     # Always export compile commands for clangd IntelliSense
     config_cmd += ' -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON'

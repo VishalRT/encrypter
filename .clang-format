@@ -1,4 +1,3 @@
----
 Language: Cpp
 BasedOnStyle: LLVM
 IndentWidth: 4
@@ -11,4 +10,3 @@ IndentCaseLabels: true
 AlignAfterOpenBracket: Align
 AccessModifierOffset: -4
 PointerAlignment: Left
----

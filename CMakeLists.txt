@@ -4,7 +4,9 @@ project(encrypter)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
+# We are passing in build flags that are working. These aren't really required
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
 
@@ -32,11 +34,15 @@ message(STATUS "OPENSSL FOUND ${OPENSSL_FOUND}")
 # message("Openssl Libraries: ${OPENSSL_LIBRARIES}")
 
 #Windows, OpenSSL API inclusion
-add_compile_options("$ENV{CFLAGS}" "$ENV{CXXFLAGS}")
-link_directories("$ENV{LDFLAGS}")
+# add_compile_options("$ENV{CFLAGS}" "$ENV{CXXFLAGS}")
+# link_directories("$ENV{LDFLAGS}")
+
+# Add OpenSSL include directory globally
+include_directories(${OPENSSL_INCLUDE_DIR})
+# Also add explicit compile flags to ensure includes are passed to clangd
+add_compile_options(-I${OPENSSL_INCLUDE_DIR})
 
 add_executable(${PROJECT_NAME} src/main.cpp)
-
 target_link_libraries(${PROJECT_NAME} PRIVATE kernel32 OpenSSL::Crypto)
 
 # C++ Core Guidelines enforcement with clang-tidy

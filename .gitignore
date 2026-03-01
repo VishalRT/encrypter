@@ -1,5 +1,4 @@
 CMakeCache.txt
 build
 .cache
-.vscode/settings.json
 test/files/*

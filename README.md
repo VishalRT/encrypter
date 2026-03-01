@@ -26,58 +26,69 @@
 ----------------------------------------------------------------------------------------------------------------------------------------
 
 # Overview
-This project enforces(somewhat) C++ Core Guidelines naming conventions and layout rules using clangd for real-time VS Code integration.
-https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-philosophy
+Why did I created this? Because I use it for personal files.
 
-# PREREQUISTE
+
+# Dev Environment Setup
+
+## PREREQUISTE
 - **Clang 20.1.1** (C++23 compiler)
 - **OpenSSL 3.4.1** (Library: OpenSSL 3.4.1 11 Feb 2025)
 - **Python 3.10.11** (Build script)
-- **Windows SDK** (for Windows headers - auto-detected by clang)
 - **VS Code Extension**: clangd with clang-tidy integration
 - **Configuration**: `.clang-tidy` file for naming rules
 
-# Environment Setup
+**NOTE**: Version aren't mandatory used when this was being developed
 
-## Windows PowerShell:
+## Windows 
+- **Toolchain**: MSYS2 / MinGW-w64 (UCRT64)
+- **Windows API Headers** : MinGW-w64 Headers v12.0.0 from Universal C Runtime (UCRT)
+
+### Windows PowerShell:
 ```powershell
 # Set OpenSSL root directory
-$env:OPENSSL_ROOT_DIR = "C:/path/to/openssl"
+$env:OPENSSL_ROOT_DIR = "C:/msys64/ucrt64"
 
-# Optional: Set compiler flags (handled by CMake)
-$env:CFLAGS = "-I C:/msys64/ucrt64/include"
-$env:CXXFLAGS = "-I C:/msys64/ucrt64/include" 
-$env:LDFLAGS = "-L C:/msys64/ucrt64/lib"
+# Add compiler/library paths to PATH if needed
+$env:PATH = "C:/msys64/ucrt64/bin;$env:PATH"
+
+# Optional: Set MSYS2 environment variables for UCRT64
+$env:MSYSTEM = "UCRT64"
+$env:MSYS2_PATH = "C:/msys64/ucrt64"
 ```
 
-## Windows CMD:
+### Windows CMD:
 ```cmd
-# Set OpenSSL root directory
-set OPENSSL_ROOT_DIR=C:/path/to/openssl
+# Set OpenSSL root directory (Used by cmake to identify includes/libs)
+set OPENSSL_ROOT_DIR=C:/msys64/ucrt64
 
-# Optional: Set compiler flags (handled by CMake)
-set CFLAGS=-I C:/msys64/ucrt64/include
-set CXXFLAGS=-I C:/msys64/ucrt64/include
-set LDFLAGS=-L C:/msys64/ucrt64/lib
+# Add bin to path
+set PATH=C:/msys64/ucrt64/bin;%PATH%
+
+# OPTIONAL: Set OpenSSL root directory (Used by cmake to identify includes/libs)
+set MSYSTEM=UCRT64
+set MSYS2_PATH=C:/msys64/ucrt64
 ```
 
 ## Linux/macOS Bash:
 ```bash
-# Set OpenSSL root directory
-export OPENSSL_ROOT_DIR=/path/to/openssl
-
-# Optional: Set compiler flags (handled by CMake)
-export CFLAGS="-I /usr/local/include"
-export CXXFLAGS="-I /usr/local/include" 
-export LDFLAGS="-L /usr/local/lib"
+TBU
 ```
 
-## Note: Using clang (not MSVC) - no Visual Studio paths needed. clang automatically finds standard library and Windows SDK headers.
-
 ------------------------------------------------------------------------------------------------------------------------------------------
+## VS Code Setup
+1. Install clangd extension from VS Code Marketplace
+2. Create `settings.json` in workspace root (already created)
+3. Real-time naming violations will appear as squiggles and in Problems panel
 
+## Build-time Enforcement
+- `.clang-tidy` file configured for naming rules
+- **VS Code Intellisense**: VS Code with clangd extension
+- **Conditional Build**: `python build.py --build-action rebuild --clang-tidy-check` (only when flag passed)
+- **CMake Target**: `cmake --build build --target clang-tidy-check` (only when enabled)
+- **Manual**: `clang-tidy src/main.cpp --checks='readability-identifier-naming'`
 
-## Naming Conventions (C++ Core Guidelines NL Section)
+## Code Conventions ([C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-philosophy) NL Section)
 - **Functions**: `snake_case` (NL.10)
 - **Variables**: `snake_case` (NL.10) 
 - **Constants**: `UPPER_CASE` (NL.9 spirit)
@@ -91,22 +102,24 @@ export LDFLAGS="-L /usr/local/lib"
 - **NL.20**: Single statements per line
 - **NL.4**: Consistent indentation
 
-## VS Code Setup
-1. Install clangd extension from VS Code Marketplace
-2. Create `settings.json` in workspace root (already created)
-3. Real-time naming violations will appear as squiggles and in Problems panel
+# BUILD
 
-## Build-time Enforcement
-- `.clang-tidy` file configured for naming rules
-- **VS Code Intellisense**: VS Code with clangd extension
-- **Conditional Build**: `python build.py --build-action rebuild --clang-tidy-check` (only when flag passed)
-- **CMake Target**: `cmake --build build --target clang-tidy-check` (only when enabled)
-- **Manual**: `clang-tidy src/main.cpp --checks='readability-identifier-naming'`
+## Build Command Details
+```powershell
+python build.py [--build-action {rebuild,clean,fresh}] [--build-type {debug,release,relwithdebinfo}] [--clang-tidy-check]
+```
+**NOTE:** Default values if not mentioned : clean release build without clang-tidy chec
 
 **Build Actions:**
 - **rebuild**: Normal incremental build
 - **clean**: Clean build targets then rebuild  
 - **fresh**: Complete rebuild with fresh configuration
+
+
+**Build type**
+- Just [cmake build types](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html), each of them aren't included
+    
+
 
 **Usage Examples:**
 ```bash
@@ -123,7 +136,6 @@ python build.py --build-action fresh --clang-tidy-check
 python build.py --build-action fresh --build-type debug
 ``` 
 
-# BUILD
 ## Debugging build script available in launch.json file
 - Keybindings for build using vscode tasks
 ```
@@ -154,7 +166,8 @@ python build.py --build-action fresh --build-type debug
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Observation in Windows for file watcher using neovim
+
+## Observation in Windows for file watcher using neovim
     * nvim creates a temporary file from original file and write data on it
     * when we save using :write or :w it first deletes the original file
     * then renames the temporary file to original file.
