@@ -4,6 +4,7 @@
 - Make CLI first then lets move to the watcher logic part.- DONE
 - Service implementation, we should be able to observe file changes from service - DONE
 - FileRename not working fix - InProgress
+- Modularize to files
 - Use `std::expected` (C++23) for cleaner error handling
 - handle closeHandle on abrupt close of exe (ctrl + c?), Use `SetConsoleCtrlHandler` for graceful shutdown on Windows
 - Implement RAII wrappers for OpenSSL and Windows handles

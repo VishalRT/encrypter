@@ -1,5 +1,10 @@
 ---
-Checks: '-*,readability-identifier-naming'
+# Checks enforcing C++ Core Guidelines (Stroustrup, Sutter)
+# NL.8, NL.9, NL.10, NL.17: readability-identifier-naming
+# SF.8: modernize-pragma-once
+# SF.11: misc-include-cleaner
+# SF.1-SF.3: readability-inconsistent-declaration-parameter-name
+Checks: '-*,readability-identifier-naming,modernize-pragma-once,misc-include-cleaner,readability-inconsistent-declaration-parameter-name'
 CheckOptions:
   # NL.8: Use all-uppercase names for macro-like entities
   - key: readability-identifier-naming.ConstantCase
@@ -28,3 +33,6 @@ CheckOptions:
   # NL.17: Use '_' as suffix for private members
   - key: readability-identifier-naming.PrivateMemberSuffix
     value: '_'
+  # SF.8: Use #pragma once instead of header guards
+  - key: modernize-pragma-once.FixHeaderGuards
+    value: 'true'

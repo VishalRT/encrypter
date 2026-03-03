@@ -178,6 +178,36 @@ static std::optional<HANDLE> open_directory_handle(const std::wstring& directory
 
     return dirHandle;
 }
+/**
+ * For debugging to be removed
+ */
+void PrintAction(DWORD action, const std::wstring& filename_w) {
+    std::string filename = to_utf8(filename_w);
+    // if (filename != target_file)
+    //   return;
+
+    switch (action) {
+        case FILE_ACTION_ADDED:
+            std::cout << "File Created: " << filename << "\n";
+            break;
+        case FILE_ACTION_REMOVED:
+            std::cout << "File Deleted: " << filename << "\n";
+            break;
+        case FILE_ACTION_MODIFIED:
+            std::cout << "File Modified: " << filename << "\n";
+            break;
+        case FILE_ACTION_RENAMED_OLD_NAME:
+            std::cout << "File Renamed (Old Name): " << filename << "\n";
+            break;
+        case FILE_ACTION_RENAMED_NEW_NAME:
+            std::cout << "File Renamed (New Name): " << filename << "\n";
+            // target_file = filename;
+            break;
+        default:
+            std::cout << "Unknown Action: " << filename << "\n";
+            break;
+    }
+}
 
 static void watch_directory(const std::string& source_path, const std::string& dest_path,
                             const std::string& password) {
@@ -207,6 +237,8 @@ static void watch_directory(const std::string& source_path, const std::string& d
         do {
             std::wstring filename_wide(notify_info->FileName,
                                        notify_info->FileNameLength / sizeof(WCHAR));
+
+            PrintAction(notify_info->Action, filename_wide);
 
             if (notify_info->Action == FILE_ACTION_MODIFIED && filename_wide == file_to_watch) {
                 std::cout << "File Modified: " << to_utf8(filename_wide) << ". Re-encrypting...\n";
