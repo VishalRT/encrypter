@@ -1,32 +1,31 @@
 # TODO
-- user mr stroustrup's guidelines from github to enforce best practices on identifiers - DONE
+- use mr stroustrup's guidelines from github to enforce best practices on identifiers - DONE
 - implement cmake --fresh option - DONE
-- Make CLI first then lets move to the service logic part.- DONE
+- Make CLI first then lets move to the watcher logic part.- DONE
 - Service implementation, we should be able to observe file changes from service - DONE
-- Implement RAII wrappers for OpenSSL and Windows handles
-- Use `std::expected` (C++23) for cleaner error handling
-- Use `SetConsoleCtrlHandler` for graceful shutdown on Windows
 - FileRename not working fix - InProgress
+- Use `std::expected` (C++23) for cleaner error handling
+- handle closeHandle on abrupt close of exe (ctrl + c?), Use `SetConsoleCtrlHandler` for graceful shutdown on Windows
+- Implement RAII wrappers for OpenSSL and Windows handles
 - encrypt file to specific destination
-- decrypt file and open using windows/default app
-- When to encrypt and decrypt to make the file available to user ?
-- capture delta of file
-- handle closeHandle on abrupt close of exe (ctrl + c?)
-- OOP's apply properly
+- OOP's application
+- capture delta of file and update if required - for np++, vscode dual modified calls fix
 - Don't use string in password. check if strings are immutable in cpp as well
-- Installation and initiazion of service in windows
-- Implementaiton in other OS, Linux and MacOScls
+- decrypt file and open using windows/default app, When to encrypt and decrypt to make the file available to user ?
 - Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ?
+- Installation and initiazion of service in windows
+- Implementaiton in other OS, Linux and MacOS
 - CMAKE_GENERATOR env variable as flag to select build generator(ninja or make)
 - stop at cmake if there's any issue with it during build
 - Removed verbose log to build system, make it optional later
-- Remove CXX and LDFLags and check if openssl is found ? 
 - GUI - Maybe last when most of the things are completed 
 
 ----------------------------------------------------------------------------------------------------------------------------------------
 
 # Overview
-Why did I created this? Because I use it for personal files.
+- Simple application to encrypt file using AES CBC
+- File watcher to encrypt based on file changes. Probably will create a OS service in future that reads writes from source to destination
+- Why did I created this? Because I use it.
 
 
 # Dev Environment Setup

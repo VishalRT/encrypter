@@ -1,19 +1,20 @@
 #include <array>
-#include <conio.h>
-#include <fileapi.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <optional>
 #include <string>
 #include <vector>
+/////////////////////////////// WIN API's
+#include <conio.h>
+#include <fileapi.h>
 #include <windows.h>
 
-////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////
 
 namespace {
 constexpr size_t SALT_SIZE = 16;
@@ -245,8 +246,8 @@ int main(int argc, char** argv) {
     std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << "\n";
 
     if (argc == 4 && std::string(argv[1]) == "--watch") {
-        std::string src = argv[2];
-        std::string dst = argv[3];
+        const std::string SRC = argv[2];
+        const std::string DST = argv[3];
         std::string pwd = prompt_password("Enter password for watch mode");
         if (pwd.empty()) {
             std::cerr << "Empty password not allowed\n";
@@ -255,16 +256,17 @@ int main(int argc, char** argv) {
 
         // Initial encryption
         std::cout << "Performing initial encryption...\n";
-        int rc = encrypt_file_stream(src, dst, pwd);
+        int rc = encrypt_file_stream(SRC, DST, pwd);
         if (rc == 0) {
-            std::cout << "Initial encryption completed: " << dst << "\n";
+            std::cout << "Initial encryption completed: " << DST << "\n";
         } else {
             std::cerr << "Initial encryption failed.\n";
             // We can still start watching, maybe the file will be created later
         }
 
-        watch_directory(src, dst, pwd);
+        watch_directory(SRC, DST, pwd);
 
+        std::cout << "Exiting watch mode.\n";
         EVP_cleanup();
         ERR_free_strings();
         return 0;
