@@ -9,7 +9,11 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/encrypter.exe",
-            "args": [],
+            "args": [
+                "--file",
+                ".\\test\\files\\test.txt",
+                ".\\test\\files\\output.enc"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
