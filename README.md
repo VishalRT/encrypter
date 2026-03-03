@@ -13,6 +13,7 @@
 - capture delta of file and update if required - for np++, vscode dual modified calls fix
 - Don't use string in password. check if strings are immutable in cpp as well
 - decrypt file and open using windows/default app, When to encrypt and decrypt to make the file available to user ?
+- Line 79 CmakeList.txt Include clang-tidy as part of cmake build system
 - Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ?
 - Installation and initiazion of service in windows
 - Implementaiton in other OS, Linux and MacOS

@@ -50,15 +50,17 @@ target_link_libraries(${PROJECT_NAME} PRIVATE kernel32 OpenSSL::Crypto)
 option(ENABLE_CLANG_TIDY_CHECKS "Enable clang-tidy naming checks" OFF)
 
 if(ENABLE_CLANG_TIDY_CHECKS)
-    find_program(CLANG_TIDY clang-tidy)
-    if(CLANG_TIDY)
-        message(STATUS "clang-tidy found: ${CLANG_TIDY}")
+    find_program(CLANG_TIDY_EXE  clang-tidy)
+    get_target_property(PROJECT_SOURCES_FILES encrypter SOURCES)
+    if(CLANG_TIDY_EXE)
+        message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
         # Create custom target for clang-tidy checks
+        # Uses .clang-tidy file in the repo
         add_custom_target(clang-tidy-check
-            COMMAND ${CLANG_TIDY}
-                -checks="-*,readability-identifier-naming"
+            COMMAND ${CLANG_TIDY_EXE}
                 -p=${CMAKE_BINARY_DIR}
-                ${CMAKE_SOURCE_DIR}/src/main.cpp
+                -header-filter="include/.*"
+                ${PROJECT_SOURCES_FILES}
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             COMMENT "Running clang-tidy naming checks"
         )
@@ -66,6 +68,19 @@ if(ENABLE_CLANG_TIDY_CHECKS)
         message(WARNING "clang-tidy not found - naming checks not available in build")
     endif()
 endif()
+
+
+#TODO: Include the below industry standard clang-tidy 
+# checks once we have the codebase in a good shape. 
+# We can enable them incrementally as we fix the issues.
+# option(ENABLE_CLANG_TIDY_CHECKS "Enable clang-tidy" ON)
+# if(ENABLE_CLANG_TIDY_CHECKS)
+#     find_program(CLANG_TIDY_EXE clang-tidy)
+
+#     if(CLANG_TIDY_EXE)
+#         set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_EXE})
+#     endif()
+# endif()
 
 # TODO: Remove this once c++ 23 feature are fully available in clang
 # https://www.reddit.com/r/cpp/comments/1b6f3s4/comment/ktcxhha/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1
