@@ -1,35 +1,38 @@
 ---
 # Checks enforcing C++ Core Guidelines (Stroustrup, Sutter)
-# NL.8, NL.9, NL.10, NL.17: readability-identifier-naming
+# NL.8, NL.9, NL.10, NL.17: readability-identifier-naming.* all of them are included
 # SF.8: modernize-pragma-once
 # SF.11: misc-include-cleaner
 # SF.1-SF.3: readability-inconsistent-declaration-parameter-name
-Checks: '-*,readability-identifier-naming,modernize-pragma-once,misc-include-cleaner,readability-inconsistent-declaration-parameter-name'
+Checks: '-*,readability-identifier-naming,
+  modernize-pragma-once,
+  misc-include-cleaner,
+  readability-inconsistent-declaration-parameter-name'
 CheckOptions:
   # NL.8: Use all-uppercase names for macro-like entities
   - key: readability-identifier-naming.ConstantCase
     value: UPPER_CASE
-  # NL.9: Prefer PascalCase for type names
+  # NL.9: Prefer PascalCase(CamelCase in clang-tidy) for type names
   - key: readability-identifier-naming.ClassCase
-    value: PascalCase
-  # NL.9: Prefer PascalCase for type names
+    value: CamelCase
+  # NL.9: Prefer PascalCase(CamelCase in clang-tidy) for type names
   - key: readability-identifier-naming.StructCase
-    value: PascalCase
-  # NL.9: Prefer PascalCase for type names
+    value: CamelCase
+  # NL.9: Prefer PascalCase(CamelCase in clang-tidy) for type names
   - key: readability-identifier-naming.EnumCase
-    value: PascalCase
-  # NL.10: Use snake_case for function names
+    value: CamelCase
+  # NL.10: Use snake_case(lower_case in clang-tidy) for function names
   - key: readability-identifier-naming.FunctionCase
-    value: snake_case
-  # NL.10: Use snake_case for variable names
+    value: lower_case
+  # NL.10: Use snake_case(lower_case in clang-tidy) for variable names
   - key: readability-identifier-naming.VariableCase
-    value: snake_case
-  # NL.10: Use snake_case for parameter names
+    value: lower_case
+  # NL.10: Use snake_case(lower_case in clang-tidy) for parameter names
   - key: readability-identifier-naming.ParameterCase
-    value: snake_case
-  # NL.10: Use snake_case for member names
+    value: lower_case
+  # NL.10: Use snake_case(lower_case in clang-tidy) for member names
   - key: readability-identifier-naming.MemberCase
-    value: snake_case
+    value: lower_case
   # NL.17: Use '_' as suffix for private members
   - key: readability-identifier-naming.PrivateMemberSuffix
     value: '_'
