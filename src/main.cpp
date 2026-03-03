@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 /////////////////////////////// WIN API's
-#include <conio.h>
 #include <fileapi.h>
 #include <windows.h>
 
@@ -15,6 +14,8 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 //////////////////////////////////
+
+#include "password_prompt.h"
 
 namespace {
 constexpr size_t SALT_SIZE = 16;
@@ -31,29 +32,6 @@ static void print_openssl_error() {
         ERR_error_string_n(err, buf, sizeof(buf));
         std::cerr << "OpenSSL error: " << buf << "\n";
     }
-}
-
-static std::string prompt_password(const char* prompt) {
-    std::cout << prompt << " (input hidden): ";
-    std::string pwd;
-    int ch;
-    while ((ch = _getch()) != '\r') {
-        if (ch == '\b') {
-            if (!pwd.empty()) {
-                pwd.pop_back();
-                std::cout << "\b \b";
-            }
-            // Ctrl+C (ASCII 3) pressed: handle user interruption
-        } else if (ch == 3) {
-            std::cout << "\n";
-            exit(1);
-        } else {
-            pwd.push_back(static_cast<char>(ch));
-            std::cout << '*';
-        }
-    }
-    std::cout << "\n";
-    return pwd;
 }
 
 static bool derive_key_iv(const std::string& password, const std::vector<unsigned char>& salt,
@@ -280,7 +258,7 @@ int main(int argc, char** argv) {
     if (argc == 4 && std::string(argv[1]) == "--watch") {
         const std::string SRC = argv[2];
         const std::string DST = argv[3];
-        std::string pwd = prompt_password("Enter password for watch mode");
+        std::string pwd = password_prompt::prompt_password("Enter password for watch mode");
         if (pwd.empty()) {
             std::cerr << "Empty password not allowed\n";
             return 1;
@@ -306,7 +284,7 @@ int main(int argc, char** argv) {
     } else if (argc == 4 && std::string(argv[1]) == "--file") {
         std::string src = argv[2];
         std::string dst = argv[3];
-        std::string pwd = prompt_password("Enter password");
+        std::string pwd = password_prompt::prompt_password("Enter password");
         if (pwd.empty()) {
             std::cerr << "Empty password not allowed\n";
             return 1;
