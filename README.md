@@ -25,9 +25,10 @@
 ----------------------------------------------------------------------------------------------------------------------------------------
 
 # Overview
-- Simple application to encrypt file using AES CBC
+- Simple application to encrypt file using AES-256-CBC with password-derived(PBKDF2) key 
+- **NOTE: DO NOT USE THIS IS NOT SECURE YET**
 - File watcher to encrypt based on file changes. Probably will create a OS service in future that reads writes from source to destination
-- Why did I created this? Because I use it.
+- Why did I created this? Because I will use it.
 
 
 # Dev Environment Setup
@@ -43,6 +44,7 @@
 
 ## Windows 
 - **Toolchain**: MSYS2 / MinGW-w64 (UCRT64)
+- We are using msys2 to use clang and the supported win32 API's provided by minGW. So that we don't have to use clang by msvc.
 - **Windows API Headers** : MinGW-w64 Headers v12.0.0 from Universal C Runtime (UCRT)
 
 ### Windows PowerShell:
