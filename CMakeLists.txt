@@ -42,7 +42,7 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 # Also add explicit compile flags to ensure includes are passed to clangd
 add_compile_options(-I${OPENSSL_INCLUDE_DIR})
 
-add_executable(${PROJECT_NAME} src/main.cpp src/password_prompt.cpp src/file_encryption.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/password_prompt.cpp src/file_encryption.cpp src/file_watcher.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE kernel32 OpenSSL::Crypto)
 
