@@ -3,8 +3,8 @@
 - implement cmake --fresh option - DONE
 - Make CLI first then lets move to the watcher logic part.- DONE
 - Service implementation, we should be able to observe file changes from service - DONE
+- Modularize to files - DONE
 - FileRename not working fix - InProgress
-- Modularize to files
 - Use `std::expected` (C++23) for cleaner error handling
 - handle closeHandle on abrupt close of exe (ctrl + c?), Use `SetConsoleCtrlHandler` for graceful shutdown on Windows
 - Implement RAII wrappers for OpenSSL and Windows handles
@@ -13,6 +13,7 @@
 - capture delta of file and update if required - for np++, vscode dual modified calls fix
 - Don't use string in password. check if strings are immutable in cpp as well
 - decrypt file and open using windows/default app, When to encrypt and decrypt to make the file available to user ?
+- main cpp use decrypt(main.cpp:Line79) only when required
 - Line 79 CmakeList.txt Include clang-tidy as part of cmake build system
 - Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ?
 - Installation and initiazion of service in windows

@@ -56,8 +56,21 @@ int main(int argc, char** argv) {
         int rc = file_encryption::encrypt_file_stream(src, dst, pwd);
         EVP_cleanup();
         ERR_free_strings();
-        if (rc == 0)
+        // TODO: This is just for testing to be used on service
+        if (rc == 0) {
             std::cout << "Encryption completed: " << dst << "\n";
+
+            // Decrypt to decrypted.txt for verification
+            std::filesystem::path src_path(src);
+            std::filesystem::path decrypted_path = src_path.parent_path() / "decrypted.txt";
+            int decrypt_rc =
+                file_encryption::decrypt_file_stream(dst, decrypted_path.string(), pwd);
+            if (decrypt_rc == 0) {
+                std::cout << "Decryption completed: " << decrypted_path.string() << "\n";
+            } else {
+                std::cerr << "Decryption failed.\n" << decrypt_rc;
+            }
+        }
         return rc;
     } else {
         std::cout << "Usage for one-time encryption: encrypter --file "

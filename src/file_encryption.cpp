@@ -17,7 +17,7 @@ constexpr size_t SALT_SIZE = 16;
 constexpr size_t KEY_SIZE = 32; // AES-256
 constexpr size_t IV_SIZE = 16;
 constexpr int PBKDF2_ITERS = 100000;
-const char MAGIC_HEADER[] = "ENCRYPv1"; // 8 bytes
+const char MAGIC_HEADER[] = "ENCRYPTERV1"; // 11 bytes
 
 void print_openssl_error() {
     unsigned long err = ERR_get_error();
@@ -117,6 +117,95 @@ int encrypt_file_stream(const std::string& input_path, const std::string& output
     }
     if (tmplen > 0)
         outfile.write(reinterpret_cast<const char*>(outbuf.data()), tmplen);
+    EVP_CIPHER_CTX_free(ctx);
+    return 0;
+}
+
+int decrypt_file_stream(const std::string& input_path, const std::string& output_path,
+                        const std::string& password) {
+    std::ifstream infile(input_path, std::ios::in | std::ios::binary);
+    if (!infile) {
+        std::cerr << "Failed to open encrypted file: " << input_path << "\n";
+        return 1;
+    }
+
+    std::filebuf file_buffer;
+    if (!file_buffer.open(output_path, std::ios::out | std::ios::binary)) {
+        std::cerr << "Failed to open/create decrypted file: " << output_path << "\n";
+        return 1;
+    }
+
+    std::vector<unsigned char> magic_header(sizeof(MAGIC_HEADER) - 1);
+    if (!infile.read(reinterpret_cast<char*>(magic_header.data()), sizeof(MAGIC_HEADER) - 1)) {
+        std::cerr << "Failed to read magic header from encrypted file\n";
+        return 1;
+    }
+
+    // Verify magic header
+    if (std::string(reinterpret_cast<char*>(magic_header.data()), sizeof(MAGIC_HEADER) - 1) !=
+        MAGIC_HEADER) {
+        std::cerr << "Invalid file format - not an ENCRYPTERV1 encrypted file\n";
+        return 1;
+    }
+
+    std::vector<unsigned char> salt(SALT_SIZE);
+    if (!infile.read(reinterpret_cast<char*>(salt.data()), SALT_SIZE)) {
+        std::cerr << "Failed to read salt from encrypted file\n";
+        return 1;
+    }
+
+    std::vector<unsigned char> key, iv;
+    if (!derive_key_iv(password, salt, key, iv)) {
+        std::cerr << "Key derivation failed\n";
+        return 1;
+    }
+
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) {
+        std::cerr << "EVP_CIPHER_CTX_new failed\n";
+        return 1;
+    }
+    if (EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv.data()) != 1) {
+        std::cerr << "EVP_DecryptInit_ex failed\n";
+        print_openssl_error();
+        EVP_CIPHER_CTX_free(ctx);
+        return 1;
+    }
+
+    const size_t BUFSIZE = 4096;
+    std::vector<unsigned char> inbuf(BUFSIZE);
+    /** Adding extra 16 bytes for padding and cryptossl lib operations
+     * For more info:
+     * https://github.com/openssl/openssl/issues/26169
+     * https://www.openssl.org/docs/man3.0/man3/EVP_DecryptUpdate.html
+     */
+    std::vector<unsigned char> decrypted_buffer(BUFSIZE + EVP_CIPHER_block_size(EVP_aes_256_cbc()));
+
+    while (infile) {
+        infile.read(reinterpret_cast<char*>(inbuf.data()), BUFSIZE);
+        std::streamsize read_bytes = infile.gcount();
+        if (read_bytes > 0) {
+            int outlen = 0;
+            if (EVP_DecryptUpdate(ctx, decrypted_buffer.data(), &outlen, inbuf.data(),
+                                  static_cast<int>(read_bytes)) != 1) {
+                std::cerr << "EVP_DecryptUpdate failed\n";
+                print_openssl_error();
+                EVP_CIPHER_CTX_free(ctx);
+                return 1;
+            }
+            file_buffer.sputn(reinterpret_cast<const char*>(decrypted_buffer.data()), outlen);
+        }
+    }
+
+    int tmplen = 0;
+    if (EVP_DecryptFinal_ex(ctx, decrypted_buffer.data(), &tmplen) != 1) {
+        std::cerr << "EVP_DecryptFinal_ex failed\n";
+        print_openssl_error();
+        EVP_CIPHER_CTX_free(ctx);
+        return 1;
+    }
+    if (tmplen > 0)
+        file_buffer.sputn(reinterpret_cast<const char*>(decrypted_buffer.data()), tmplen);
     EVP_CIPHER_CTX_free(ctx);
     return 0;
 }
