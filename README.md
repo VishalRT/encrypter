@@ -41,7 +41,7 @@
 - **VS Code Extension**: clangd with clang-tidy integration
 - **Configuration**: `.clang-tidy` file for naming rules
 
-**NOTE**: Version aren't mandatory used when this was being developed
+**NOTE**: Versions and compiler aren't mandatory but are used when this was being developed
 
 ## Windows 
 - **Toolchain**: MSYS2 / MinGW-w64 (UCRT64)

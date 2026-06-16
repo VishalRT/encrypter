@@ -14,7 +14,6 @@
 
 namespace {
 
-// Constants in UPPER_CASE (NL.17)
 constexpr size_t BUFFER_SIZE = 2048;
 
 /// Converts wide-character string to UTF-8 encoding
@@ -30,10 +29,11 @@ std::string to_utf8(const std::wstring& wstr) {
     return str;
 }
 
-/// Opens a directory handle for monitoring file system changes
-/// Uses Windows CreateFileW API with Directory-specific flags for change notifications.
-/// @param directory Path to directory to watch (wide-character string)
-/// @return std::optional<HANDLE> - valid handle on success, nullopt if CreateFileW fails
+/** Opens a directory handle for monitoring file system changes
+ * Uses Windows CreateFileW API with Directory-specific flags for change notifications.
+ * @param directory Path to directory to watch (wide-character string)
+ * @return std::optional<HANDLE> - valid handle on success, nullopt if CreateFileW fails
+ */
 std::optional<HANDLE> open_directory_handle(const std::wstring& directory) {
     HANDLE dir_handle = CreateFileW(directory.c_str(), FILE_LIST_DIRECTORY,
                                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
@@ -46,30 +46,27 @@ std::optional<HANDLE> open_directory_handle(const std::wstring& directory) {
     return dir_handle;
 }
 
-/// To be removed Logs file system action to stdout (for debugging and user feedback)
-/// @param action FILE_ACTION_* constant from Windows API (FILE_ACTION_ADDED, etc.)
-/// @param filename_w Wide-character filename that triggered the action
 void print_action(DWORD action, const std::wstring& filename_w) {
     std::string filename = to_utf8(filename_w);
 
     switch (action) {
         case FILE_ACTION_ADDED:
-            std::cout << "File Created: " << filename << "\n";
+            std::cout << "[PRINT_ACTION]File Created: " << filename << "\n";
             break;
         case FILE_ACTION_REMOVED:
-            std::cout << "File Deleted: " << filename << "\n";
+            std::cout << "[PRINT_ACTION]File Deleted: " << filename << "\n";
             break;
         case FILE_ACTION_MODIFIED:
-            std::cout << "File Modified: " << filename << "\n";
+            std::cout << "[PRINT_ACTION]File Modified: " << filename << "\n";
             break;
         case FILE_ACTION_RENAMED_OLD_NAME:
-            std::cout << "File Renamed (Old Name): " << filename << "\n";
+            std::cout << "[PRINT_ACTION]File Renamed (Old Name): " << filename << "\n";
             break;
         case FILE_ACTION_RENAMED_NEW_NAME:
-            std::cout << "File Renamed (New Name): " << filename << "\n";
+            std::cout << "[PRINT_ACTION]File Renamed (New Name): " << filename << "\n";
             break;
         default:
-            std::cout << "Unknown Action: " << filename << "\n";
+            std::cout << "[PRINT_ACTION]Unknown Action: " << filename << "\n";
             break;
     }
 }
@@ -78,7 +75,7 @@ void print_action(DWORD action, const std::wstring& filename_w) {
 
 namespace file_watcher {
 
-void watch_directory(const std::string& source_path, const std::string& dest_path,
+void watch_directory(std::string& source_path, const std::string& dest_path,
                      const std::string& password) {
     std::filesystem::path source_path_fs = source_path;
     std::wstring directory_to_watch = source_path_fs.parent_path().wstring();
@@ -103,6 +100,8 @@ void watch_directory(const std::string& source_path, const std::string& dest_pat
         FILE_NOTIFY_INFORMATION* notify_info =
             reinterpret_cast<FILE_NOTIFY_INFORMATION*>(buffer.data());
 
+        std::optional<std::wstring> rename_old_name;
+
         do {
             std::wstring filename_wide(notify_info->FileName,
                                        notify_info->FileNameLength / sizeof(WCHAR));
@@ -117,15 +116,41 @@ void watch_directory(const std::string& source_path, const std::string& dest_pat
                 } else {
                     std::cerr << "Encryption failed.\n";
                 }
-            } else if (notify_info->Action == FILE_ACTION_RENAMED_NEW_NAME &&
+
+            } else if (notify_info->Action == FILE_ACTION_RENAMED_OLD_NAME &&
                        filename_wide == file_to_watch) {
+                std::cout << "File Renamed from: " << to_utf8(filename_wide)
+                          << ". Updating watch target...\n";
+                rename_old_name = filename_wide;
+
+            } else if (notify_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
                 std::cout << "File Renamed to: " << to_utf8(filename_wide)
                           << ". Re-encrypting...\n";
-                int rc = file_encryption::encrypt_file_stream(source_path, dest_path, password);
-                if (rc == 0) {
-                    std::cout << "Encryption successful.\n";
+
+                if (rename_old_name && *rename_old_name == file_to_watch) {
+                    std::cout << "Renamed file matches previous watch target. Updating source path "
+                              << "and re-encrypting...\n"
+                              << "Old Filename: " << to_utf8(*rename_old_name)
+                              << ", New Filename: " << to_utf8(filename_wide) << "\n"
+                              << "Source path: " << source_path_fs << "\n";
+
+                    source_path_fs.replace_filename(filename_wide);
+                    std::cout << "Updated source path: " << source_path_fs << std::endl;
+
+                    source_path = source_path_fs.string();
+                    file_to_watch = filename_wide;
+                    rename_old_name.reset();
+
+                    std::cout << "Renamed file matches watch target. Updated source path to "
+                              << to_utf8(file_to_watch) << ". Re-encrypting new file...\n";
+                    int rc = file_encryption::encrypt_file_stream(source_path, dest_path, password);
+                    if (rc == 0) {
+                        std::cout << "Encryption successful.\n";
+                    } else {
+                        std::cerr << "Encryption failed.\n";
+                    }
                 } else {
-                    std::cerr << "Encryption failed.\n";
+                    std::cout << "Renamed file does not match watch target. No action taken.\n";
                 }
             }
 
