@@ -1,4 +1,9 @@
 CMakeCache.txt
+.github/
 build
 .cache
 test/files/*
+
+#zed related
+__cmake_systeminformation/
+.zed

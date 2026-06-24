@@ -20,5 +20,9 @@
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
         "editor.formatOnSave": true
     },
-    "clangd.checkUpdates": true
+    "clangd.checkUpdates": true,
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "markdown.validate.enabled": true
 }

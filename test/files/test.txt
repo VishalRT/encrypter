@@ -1,3 +1,33 @@
-This is for testing purpose
 
-MyPassowrd@123
+NOTES C/Cpp
+- C++ Working
+	- source to lib, or executable
+	- only cpp file are compiled not header files and headerr files are included. Source fiels 1-1 obj files
+- Compiler working
+	- create obj files, first is pre processing etc...(common ones -> include, define, if , ifdef) , create abstract syntax tree
+	- ast is used to generate binary code for cpu
+	- obj file - source code file , 1-1 mapping
+	- #incude is copy pasted by compiler into where it is included
+	- .i is extension for pre processed file
+-  How the C++ Linker Works
+	- wiring declaration/call/definition
+	- static keyword will avoid linking error if an undefined function is called from inside this static function
+-  Variables in C++
+	- data type is just size in memory - remember!
+	- format specifiers(%d/%i, %f/&F, %c, %s. %lf[double]) to use float, else default decimal is double
+-  Functions in C++
+	- only main function is exempt for not having return statement as compiler adds it
+	- have return type and not returning will not throw error in release mode - TBVerified
+-  C++ Header Files
+	- avoid creating/writing declaration in each cpp file, just include header with declaration
+	- #pragma once/#ifndef..#define...#endif - header guard to only copy the include header once even
+	- <*.h> find in include directories, "*.h" for relative to current file or anything else
+-  POINTERS in C++
+	- integer/number that stores memory address doesn't matter the type it is pointing to as address will by 4 bytes
+	- types are used to dereference and utilize(read/write) the value pointer is pointing to
+	- memset(identifier, value, size)
+-  REFERENCES in C++
+	-
+https://www.displayspecifications.com/en/model/1d7fc17
+https://www.lg.com/ca_en/monitors/ultrawide/29um59-p/
+https://gzhls.at/blob/ldb/c/9/9/a/41d4901e2d74dcf621aac740e2d5bf496233.pdf

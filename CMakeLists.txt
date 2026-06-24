@@ -19,10 +19,10 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 #OPENSSL
 ##Helpers to find openssl and libs
 if(DEFINED ENV{OPENSSL_ROOT_DIR})
-    message(STATUS "Openssl root provided $ENV{OPENSSL_ROOT_DIR}")
-    set(OPENSSL_ROOT_DIR "$ENV{OPENSSL_ROOT_DIR}")
+  message(STATUS "Openssl root provided $ENV{OPENSSL_ROOT_DIR}")
+  set(OPENSSL_ROOT_DIR "$ENV{OPENSSL_ROOT_DIR}")
 else()
-    message(WARNING "Openssl root not provided in env variable")
+  message(WARNING "Openssl root not provided in env variable")
 endif()
 
 set(OPENSSL_USE_STATIC_LIBS TRUE)
@@ -42,21 +42,28 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 # Also add explicit compile flags to ensure includes are passed to clangd
 add_compile_options(-I${OPENSSL_INCLUDE_DIR})
 
-add_executable(${PROJECT_NAME} src/main.cpp src/password_prompt.cpp src/file_encryption.cpp src/file_watcher.cpp)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(${PROJECT_NAME}
+  src/main.cpp
+  src/password_prompt.cpp
+  src/file_encryption.cpp
+  src/file_watcher.cpp
+)
+target_include_directories(${PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 target_link_libraries(${PROJECT_NAME} PRIVATE kernel32 OpenSSL::Crypto)
 
 # C++ Core Guidelines enforcement with clang-tidy
 option(ENABLE_CLANG_TIDY_CHECKS "Enable clang-tidy naming checks" OFF)
 
 if(ENABLE_CLANG_TIDY_CHECKS)
-    find_program(CLANG_TIDY_EXE  clang-tidy)
-    get_target_property(PROJECT_SOURCES_FILES encrypter SOURCES)
-    if(CLANG_TIDY_EXE)
-        message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-        # Create custom target for clang-tidy checks
-        # Uses .clang-tidy file in the repo
-        add_custom_target(clang-tidy-check
+  find_program(CLANG_TIDY_EXE  clang-tidy)
+  get_target_property(PROJECT_SOURCES_FILES encrypter SOURCES)
+  if(CLANG_TIDY_EXE)
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+    # Create custom target for clang-tidy checks
+    # Uses .clang-tidy file in the repo
+    add_custom_target(clang-tidy-check
             COMMAND ${CLANG_TIDY_EXE}
                 -p=${CMAKE_BINARY_DIR}
                 -header-filter="include/.*"
@@ -64,14 +71,16 @@ if(ENABLE_CLANG_TIDY_CHECKS)
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             COMMENT "Running clang-tidy naming checks"
         )
-    else()
-        message(WARNING "clang-tidy not found - naming checks not available in build")
-    endif()
+  else()
+    message(WARNING
+      "clang-tidy not found - naming checks not available in build"
+    )
+  endif()
 endif()
 
 
-#TODO: Include the below industry standard clang-tidy 
-# checks once we have the codebase in a good shape. 
+#TODO: Include the below industry standard clang-tidy
+# checks once we have the codebase in a good shape.
 # We can enable them incrementally as we fix the issues.
 # option(ENABLE_CLANG_TIDY_CHECKS "Enable clang-tidy" ON)
 # if(ENABLE_CLANG_TIDY_CHECKS)
@@ -83,7 +92,7 @@ endif()
 # endif()
 
 # TODO: Remove this once c++ 23 feature are fully available in clang
-# https://www.reddit.com/r/cpp/comments/1b6f3s4/comment/ktcxhha/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1
+# https://www.reddit.com/r/cpp/comments/1b6f3s4/comment/ktcxhha/
 # if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 #   message("Using gcc libc++ temporarily")
 #   add_compile_options(

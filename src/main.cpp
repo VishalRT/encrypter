@@ -1,7 +1,5 @@
-#include <array>
 #include <filesystem>
 #include <iostream>
-#include <optional>
 #include <string>
 /////////////////////////////// WIN API's
 
@@ -11,13 +9,16 @@
 ////////////////////////////////// Local includes
 #include "file_encryption.h"
 #include "file_watcher.h"
+#include "logger.h"
 #include "password_prompt.h"
+
+using namespace logger;
 
 int main(int argc, char** argv) {
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
 
-    std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << "\n";
+    log.info("OpenSSL version: {}", OpenSSL_version(OPENSSL_VERSION));
 
     if (argc == 4 && std::string(argv[1]) == "--watch") {
         const std::string SRC = argv[2];

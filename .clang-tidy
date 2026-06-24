@@ -21,6 +21,9 @@ CheckOptions:
   # NL.9: Prefer PascalCase(CamelCase in clang-tidy) for type names
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
+  # Enum.5: Don't use ALL_CAPS for enumerators to avoid macro collisions
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
   # NL.10: Use snake_case(lower_case in clang-tidy) for function names
   - key: readability-identifier-naming.FunctionCase
     value: lower_case
