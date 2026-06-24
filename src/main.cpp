@@ -21,7 +21,8 @@ int main(int argc, char** argv) {
     log.info("OpenSSL version: {}", OpenSSL_version(OPENSSL_VERSION));
 
     if (argc == 4 && std::string(argv[1]) == "--watch") {
-        const std::string SRC = argv[2];
+        // Keeping src as non-const since we may want to update it on rename events in watch mode
+        std::string src = argv[2];
         const std::string DST = argv[3];
         std::string pwd = password_prompt::prompt_password("Enter password for watch mode");
         if (pwd.empty()) {
@@ -29,9 +30,8 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        // Initial encryption
-        std::cout << "Performing initial encryption...\n";
-        int rc = file_encryption::encrypt_file_stream(SRC, DST, pwd);
+        log.info("Performing initial encryption");
+        int rc = file_encryption::encrypt_file_stream(src, DST, pwd);
         if (rc == 0) {
             std::cout << "Initial encryption completed: " << DST << "\n";
         } else {
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
             // We can still start watching, maybe the file will be created later
         }
 
-        file_watcher::watch_directory(SRC, DST, pwd);
+        file_watcher::watch_directory(src, DST, pwd);
 
         std::cout << "Exiting watch mode.\n";
         EVP_cleanup();

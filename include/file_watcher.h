@@ -20,7 +20,7 @@ namespace file_watcher {
  * @note All system resources (HANDLE) are properly cleaned up via RAII on exit
  * @note Logs file system events and encryption status to stdout/stderr
  */
-void watch_directory(const std::string& source_path, const std::string& dest_path,
+void watch_directory(std::string& source_path, const std::string& dest_path,
                      const std::string& password);
 
 } // namespace file_watcher
