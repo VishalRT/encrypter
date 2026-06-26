@@ -6,28 +6,33 @@
 - Modularize to files - DONE
 - FileRename not working fix - DONE
 - Create simple logger - DONE
-- Use `std::expected` (C++23) for cleaner error handling
-- handle closeHandle on abrupt close of exe (ctrl + c?), Use `SetConsoleCtrlHandler` for graceful shutdown on Windows
+- Migrate Logger to use - DONE
+- File not available and then renamed to watching file not working - InProgress
+- Complete logger migration across source files
+- Add log levels/configuration to logger
+- Create file logging based on flag
+- Make verbose build logs optional
+- Stop at CMake if there's any issue during build
+- Add `CMAKE_GENERATOR` environment variable/flag to select build generator (Ninja or Make)
+- Include clang-tidy as part of CMake build system
+- Define ownership-focused classes for OS/OpenSSL resources
 - Implement RAII wrappers for OpenSSL and Windows handles
-- encrypt file to specific destination
-- Create level to logger
-- OOP's application
-- Create File logging based on flag
-- Add multi threading to the application logic
-- Create multi threaded logger
-- capture delta of file and update if required - for np++, vscode dual modified calls fix
-- Don't use string in password. check if strings are immutable in cpp as well
-- decrypt file and open using windows/default app, When to encrypt and decrypt to make the file available to user ?
-- Password encryption in memory to avoid having in dump (use byte char or research more)
-- main cpp use decrypt(main.cpp:Line79) only when required
-- Line 79 CmakeList.txt Include clang-tidy as part of cmake build system
-- Should we have some opening point to the file. i.e when file is opened we decrypt and open the txt file ?
-- Installation and initiazion of service in windows
-- Implementaiton in other OS, Linux and MacOS
-- CMAKE_GENERATOR env variable as flag to select build generator(ninja or make)
-- stop at cmake if there's any issue with it during build
-- Removed verbose log to build system, make it optional later
-- GUI - Maybe last when most of the things are completed 
+- Handle `CloseHandle` on abrupt close of exe (Ctrl+C); use `SetConsoleCtrlHandler` for graceful shutdown on Windows
+- Use `std::expected` (C++23) for cleaner error handling
+- Loop password prompt 3 times before giving up and exiting
+- Avoid `std::string` for passwords; research immutable/string memory behavior in C++
+- Protect password in memory to avoid exposure in dumps (use byte buffer/secure memory; research more)
+- Encrypt file to specific destination
+- Only decrypt in `main.cpp` when required
+- Decide when to decrypt/open files using Windows/default app to make them available to the user
+- Define an opening point for files: decrypt when the file is opened, then re-encrypt when appropriate
+- Fix duplicate/rapid modify events by capturing deltas as required (Notepad++, VS Code dual modified calls)
+- Refactor toward an OOP application structure
+- Install and initialize as a Windows service
+- Add multi-threading to the application logic
+- Create multi-threaded logger
+- Implement support for Linux and macOS
+- GUI - Maybe last when most of the things are completed
 
 ----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -41,7 +46,7 @@
 # Dev Environment Setup
 
 ## PREREQUISTE
-- **Clang 20.1.1** (C++23 compiler)
+- **Clang 20.1.1** (Used std: C++23)
 - **OpenSSL 3.4.1** (Library: OpenSSL 3.4.1 11 Feb 2025)
 - **Python 3.10.11** (Build script)
 - **VS Code Extension**: clangd with clang-tidy integration

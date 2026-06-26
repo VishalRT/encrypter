@@ -4,11 +4,15 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
+#include "logger.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+
+using namespace logger;
 
 namespace file_encryption {
 
@@ -24,7 +28,7 @@ void print_openssl_error() {
     if (err) {
         char buf[256];
         ERR_error_string_n(err, buf, sizeof(buf));
-        std::cerr << "OpenSSL error: " << buf << "\n";
+        log.error("OpenSSL error: {}", buf);
     }
 }
 
@@ -48,26 +52,26 @@ int encrypt_file_stream(const std::string& input_path, const std::string& output
                         const std::string& password) {
     std::ifstream infile(input_path, std::ios::binary);
     if (!infile) {
-        std::cerr << "Failed to open source file: " << input_path << "\n";
+        log.error("Failed to open source file: {}", input_path);
         return 1;
     }
 
     std::ofstream outfile(output_path, std::ios::binary);
     if (!outfile) {
-        std::cerr << "Failed to open destination file: " << output_path << "\n";
+        log.error("Failed to open destination file: {}", output_path);
         return 1;
     }
 
     std::vector<unsigned char> salt(SALT_SIZE);
     if (RAND_bytes(salt.data(), static_cast<int>(salt.size())) != 1) {
-        std::cerr << "Failed to generate salt\n";
+        log.error("Failed to generate salt");
         print_openssl_error();
         return 1;
     }
 
     std::vector<unsigned char> key, iv;
     if (!derive_key_iv(password, salt, key, iv)) {
-        std::cerr << "Key derivation failed\n";
+        log.error("Key derivation failed");
         return 1;
     }
 
@@ -78,11 +82,11 @@ int encrypt_file_stream(const std::string& input_path, const std::string& output
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
-        std::cerr << "EVP_CIPHER_CTX_new failed\n";
+        log.error("EVP_CIPHER_CTX_new failed");
         return 1;
     }
     if (EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv.data()) != 1) {
-        std::cerr << "EVP_EncryptInit_ex failed\n";
+        log.error("EVP_EncryptInit_ex failed");
         print_openssl_error();
         EVP_CIPHER_CTX_free(ctx);
         return 1;
@@ -99,7 +103,7 @@ int encrypt_file_stream(const std::string& input_path, const std::string& output
             int outlen = 0;
             if (EVP_EncryptUpdate(ctx, outbuf.data(), &outlen, inbuf.data(),
                                   static_cast<int>(read_bytes)) != 1) {
-                std::cerr << "EVP_EncryptUpdate failed\n";
+                log.error("EVP_EncryptUpdate failed");
                 print_openssl_error();
                 EVP_CIPHER_CTX_free(ctx);
                 return 1;
@@ -110,7 +114,7 @@ int encrypt_file_stream(const std::string& input_path, const std::string& output
 
     int tmplen = 0;
     if (EVP_EncryptFinal_ex(ctx, outbuf.data(), &tmplen) != 1) {
-        std::cerr << "EVP_EncryptFinal_ex failed\n";
+        log.error("EVP_EncryptFinal_ex failed");
         print_openssl_error();
         EVP_CIPHER_CTX_free(ctx);
         return 1;
@@ -125,48 +129,48 @@ int decrypt_file_stream(const std::string& input_path, const std::string& output
                         const std::string& password) {
     std::ifstream infile(input_path, std::ios::in | std::ios::binary);
     if (!infile) {
-        std::cerr << "Failed to open encrypted file: " << input_path << "\n";
+        log.error("Failed to open encrypted file: {}", input_path);
         return 1;
     }
 
     std::filebuf file_buffer;
     if (!file_buffer.open(output_path, std::ios::out | std::ios::binary)) {
-        std::cerr << "Failed to open/create decrypted file: " << output_path << "\n";
+        log.error("Failed to open/create decrypted file: {}", output_path);
         return 1;
     }
 
     std::vector<unsigned char> magic_header(sizeof(MAGIC_HEADER) - 1);
     if (!infile.read(reinterpret_cast<char*>(magic_header.data()), sizeof(MAGIC_HEADER) - 1)) {
-        std::cerr << "Failed to read magic header from encrypted file\n";
+        log.error("Failed to read magic header from encrypted file");
         return 1;
     }
 
     // Verify magic header
     if (std::string(reinterpret_cast<char*>(magic_header.data()), sizeof(MAGIC_HEADER) - 1) !=
         MAGIC_HEADER) {
-        std::cerr << "Invalid file format - not an ENCRYPTERV1 encrypted file\n";
+        log.error("Invalid file format - not an ENCRYPTERV1 encrypted file");
         return 1;
     }
 
     std::vector<unsigned char> salt(SALT_SIZE);
     if (!infile.read(reinterpret_cast<char*>(salt.data()), SALT_SIZE)) {
-        std::cerr << "Failed to read salt from encrypted file\n";
+        log.error("Failed to read salt from encrypted file");
         return 1;
     }
 
     std::vector<unsigned char> key, iv;
     if (!derive_key_iv(password, salt, key, iv)) {
-        std::cerr << "Key derivation failed\n";
+        log.error("Key derivation failed");
         return 1;
     }
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
-        std::cerr << "EVP_CIPHER_CTX_new failed\n";
+        log.error("EVP_CIPHER_CTX_new failed");
         return 1;
     }
     if (EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key.data(), iv.data()) != 1) {
-        std::cerr << "EVP_DecryptInit_ex failed\n";
+        log.error("EVP_DecryptInit_ex failed");
         print_openssl_error();
         EVP_CIPHER_CTX_free(ctx);
         return 1;
@@ -188,7 +192,7 @@ int decrypt_file_stream(const std::string& input_path, const std::string& output
             int outlen = 0;
             if (EVP_DecryptUpdate(ctx, decrypted_buffer.data(), &outlen, inbuf.data(),
                                   static_cast<int>(read_bytes)) != 1) {
-                std::cerr << "EVP_DecryptUpdate failed\n";
+                log.error("EVP_DecryptUpdate failed");
                 print_openssl_error();
                 EVP_CIPHER_CTX_free(ctx);
                 return 1;
@@ -199,7 +203,7 @@ int decrypt_file_stream(const std::string& input_path, const std::string& output
 
     int tmplen = 0;
     if (EVP_DecryptFinal_ex(ctx, decrypted_buffer.data(), &tmplen) != 1) {
-        std::cerr << "EVP_DecryptFinal_ex failed\n";
+        log.error("EVP_DecryptFinal_ex failed");
         print_openssl_error();
         EVP_CIPHER_CTX_free(ctx);
         return 1;

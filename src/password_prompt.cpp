@@ -1,20 +1,25 @@
 #include "password_prompt.h"
 
+#include <cmath>
 #include <conio.h>
 #include <iostream>
 #include <string>
 
+#include "logger.h"
+
 namespace password_prompt {
+
+using namespace logger;
 
 namespace {
 constexpr int BACKSPACE_CHAR = '\b';
 constexpr int CTRL_C_CHAR = 3;
 constexpr int CARRIAGE_RETURN_CHAR = '\r';
 constexpr char HIDDEN_INPUT_MASK = '*';
-} // anonymous namespace
+} // namespace
 
 std::string prompt_password(const char* prompt_message) {
-    std::cout << prompt_message << " (input hidden): ";
+    logger::log.info("{} (input hidden)", prompt_message);
     std::cout.flush();
 
     std::string password_buffer;
@@ -25,11 +30,12 @@ std::string prompt_password(const char* prompt_message) {
         if (character_input == BACKSPACE_CHAR) {
             if (!password_buffer.empty()) {
                 password_buffer.pop_back();
-                std::cout << "\b \b"; // why two backspaces and a space
+                std::cout << "\b \b";
                 std::cout.flush();
             }
         } else if (character_input == CTRL_C_CHAR) {
             std::cout << "\n";
+            password_buffer.clear();
             return "";
         } else {
             password_buffer.push_back(static_cast<char>(character_input));

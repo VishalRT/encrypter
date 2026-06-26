@@ -1,5 +1,4 @@
 #include <filesystem>
-#include <iostream>
 #include <string>
 /////////////////////////////// WIN API's
 
@@ -18,6 +17,7 @@ int main(int argc, char** argv) {
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
 
+    log.info("C++ Standard version: {}", __cplusplus);
     log.info("OpenSSL version: {}", OpenSSL_version(OPENSSL_VERSION));
 
     if (argc == 4 && std::string(argv[1]) == "--watch") {
@@ -26,22 +26,22 @@ int main(int argc, char** argv) {
         const std::string DST = argv[3];
         std::string pwd = password_prompt::prompt_password("Enter password for watch mode");
         if (pwd.empty()) {
-            std::cerr << "Empty password not allowed\n";
+            log.error("Empty password not allowed. Hello this is supposed to be secure ?");
             return 1;
         }
 
         log.info("Performing initial encryption");
         int rc = file_encryption::encrypt_file_stream(src, DST, pwd);
         if (rc == 0) {
-            std::cout << "Initial encryption completed: " << DST << "\n";
+            log.info("Initial encryption completed: {}", DST);
         } else {
-            std::cerr << "Initial encryption failed.\n";
+            log.warning("Initial encryption failed. Starting watcher anyway");
             // We can still start watching, maybe the file will be created later
         }
 
         file_watcher::watch_directory(src, DST, pwd);
 
-        std::cout << "Exiting watch mode.\n";
+        log.info("Exiting watch mode");
         EVP_cleanup();
         ERR_free_strings();
         return 0;
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
         std::string dst = argv[3];
         std::string pwd = password_prompt::prompt_password("Enter password");
         if (pwd.empty()) {
-            std::cerr << "Empty password not allowed\n";
+            log.error("Empty password not allowed");
             return 1;
         }
         int rc = file_encryption::encrypt_file_stream(src, dst, pwd);
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
         ERR_free_strings();
         // TODO: This is just for testing to be used on service
         if (rc == 0) {
-            std::cout << "Encryption completed: " << dst << "\n";
+            log.info("Encryption completed: {}", dst);
 
             // Decrypt to decrypted.txt for verification
             std::filesystem::path src_path(src);
@@ -67,17 +67,16 @@ int main(int argc, char** argv) {
             int decrypt_rc =
                 file_encryption::decrypt_file_stream(dst, decrypted_path.string(), pwd);
             if (decrypt_rc == 0) {
-                std::cout << "Decryption completed: " << decrypted_path.string() << "\n";
+                log.info("Decryption completed: {}", decrypted_path.string());
             } else {
-                std::cerr << "Decryption failed.\n" << decrypt_rc;
+                log.error("Decryption failed with code: {}", decrypt_rc);
             }
         }
         return rc;
     } else {
-        std::cout << "Usage for one-time encryption: encrypter --file "
-                     "<source_file> <destination_file>\n";
-        std::cout << "Usage for watch mode: encrypter --watch <source_file> "
-                     "<destination_file>\n";
+        log.info(
+            "Usage for one-time encryption: encrypter --file <source_file> <destination_file>");
+        log.info("Usage for watch mode: encrypter --watch <source_file> <destination_file>");
     }
 
     return 0;
