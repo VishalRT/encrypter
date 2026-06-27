@@ -8,7 +8,8 @@
 - Create simple logger - DONE
 - Migrate Logger to use - DONE
 - File not available and then renamed to watching file not working - File created after watcher now available - DONE
-- Add log levels/configuration to logger - InProgress
+- Add log levels/configuration to logger & migrate update the logs - DONE
+- Integrate log levels with build flags( Rel, RelDbg, Debug)?
 - Create file logging based on flag
 - Make verbose build logs optional
 - Stop at CMake if there's any issue during build

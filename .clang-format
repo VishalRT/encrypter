@@ -1,6 +1,5 @@
 Language: Cpp
 BasedOnStyle: LLVM
-IndentWidth: 4
 ColumnLimit: 100
 AllowShortFunctionsOnASingleLine: None
 KeepEmptyLinesAtTheStartOfBlocks: false
@@ -10,3 +9,8 @@ IndentCaseLabels: true
 AlignAfterOpenBracket: Align
 AccessModifierOffset: -4
 PointerAlignment: Left
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Always # Options: Always (Uses real tabs), ForIndentation, Never
+ContinuationIndentWidth: 4

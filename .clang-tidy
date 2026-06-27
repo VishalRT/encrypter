@@ -5,40 +5,75 @@
 # SF.11: misc-include-cleaner
 # SF.1-SF.3: readability-inconsistent-declaration-parameter-name
 Checks: '-*,readability-identifier-naming,
-  modernize-pragma-once,
-  misc-include-cleaner,
-  readability-inconsistent-declaration-parameter-name'
+    modernize-pragma-once,
+    misc-include-cleaner,
+    readability-inconsistent-declaration-parameter-name,
+    cppcoreguidelines-avoid-const-or-ref-data-members,      # C.12
+    cppcoreguidelines-avoid-c-arrays,                       # SL.con.1
+    cppcoreguidelines-use-enum-class,                       # Enum.3
+    # --- IMPLICIT CONVERSIONS & NUMERICS ---
+    google-explicit-constructor,                            # C.164
+    readability-implicit-bool-conversion,                   # ES.46
+    bugprone-implicit-widening-of-multiplication-result,    # ES.46
+    # --- RESOURCE MANAGEMENT & MEMORY SAFETY ---
+    cppcoreguidelines-owning-memory,                        # I.11, C.33, R.3
+    cppcoreguidelines-no-malloc,                            # R.10
+    #bugprone-use-after-move,                                # ES.56
+    #bugprone-dangling-handle,                               # ES.65, GSL.view
+    # --- MODERNIZATION BEST PRACTICES ---
+    modernize-use-unique-ptr,                               # R.11
+    modernize-use-auto,                                     # ES.11
+    modernize-use-equals-default,                           # C.80
+    modernize-use-equals-delete,                            # C.81
+    #modernize-use-nodiscard,                                # ES.48
+    modernize-use-override,                                 # C.128
+    # --- PERFORMANCE & BUG PREVENTION ---
+    #performance-move-const-arg,                             # ES.56
+    #performance-unnecessary-copy-initialization,            # P.9
+    #performance-unnecessary-value-param,                    # F.16
+    #bugprone-forwarding-reference-overload                  # C.163
+  '
 CheckOptions:
-  # NL.8: Use all-uppercase names for macro-like entities
-  - key: readability-identifier-naming.ConstantCase
-    value: UPPER_CASE
-  # NL.9: Prefer PascalCase(CamelCase in clang-tidy) for type names
-  - key: readability-identifier-naming.ClassCase
-    value: CamelCase
-  # NL.9: Prefer PascalCase(CamelCase in clang-tidy) for type names
-  - key: readability-identifier-naming.StructCase
-    value: CamelCase
-  # NL.9: Prefer PascalCase(CamelCase in clang-tidy) for type names
-  - key: readability-identifier-naming.EnumCase
-    value: CamelCase
-  # Enum.5: Don't use ALL_CAPS for enumerators to avoid macro collisions
-  - key: readability-identifier-naming.EnumConstantCase
-    value: CamelCase
-  # NL.10: Use snake_case(lower_case in clang-tidy) for function names
-  - key: readability-identifier-naming.FunctionCase
-    value: lower_case
-  # NL.10: Use snake_case(lower_case in clang-tidy) for variable names
-  - key: readability-identifier-naming.VariableCase
-    value: lower_case
-  # NL.10: Use snake_case(lower_case in clang-tidy) for parameter names
-  - key: readability-identifier-naming.ParameterCase
-    value: lower_case
-  # NL.10: Use snake_case(lower_case in clang-tidy) for member names
-  - key: readability-identifier-naming.MemberCase
-    value: lower_case
-  # NL.17: Use '_' as suffix for private members
-  - key: readability-identifier-naming.PrivateMemberSuffix
-    value: '_'
-  # SF.8: Use #pragma once instead of header guards
-  - key: modernize-pragma-once.FixHeaderGuards
-    value: 'true'
+    # NL.8: Use all-uppercase names for macro-like entities
+    - key: readability-identifier-naming.ConstantCase
+      value: UPPER_CASE
+    - key: readability-identifier-naming.MacroDefinitionCase
+      value: UPPER_CASE
+
+    # NL.9: Prefer PascalCase(CamelCase in clang-tidy) for type names
+    - key: readability-identifier-naming.ClassCase
+      value: CamelCase
+    - key: readability-identifier-naming.StructCase
+      value: CamelCase
+    - key: readability-identifier-naming.EnumCase
+      value: CamelCase
+    - key: readability-identifier-naming.TypeAliasCase
+      value: CamelCase
+    - key: readability-identifier-naming.TemplateParameterCase
+      value: CamelCase
+    - key: readability-identifier-naming.ConceptCase
+      value: CamelCase
+
+    # Enum.5: Don't use ALL_CAPS for enumerators to avoid macro collisions
+    - key: readability-identifier-naming.EnumConstantCase
+      value: CamelCase
+
+    # NL.10: Use snake_case(lower_case in clang-tidy) for function , variables, and scopes
+    - key: readability-identifier-naming.NamespaceCase
+      value: lower_case
+    - key: readability-identifier-naming.FunctionCase
+      value: lower_case
+    - key: readability-identifier-naming.VariableCase
+      value: lower_case
+    - key: readability-identifier-naming.ParameterCase
+      value: lower_case
+    - key: readability-identifier-naming.MemberCase
+      value: lower_case
+
+    # NL.17: Use '_' as suffix for private members
+    - key: readability-identifier-naming.PrivateMemberSuffix
+      value: '_'
+
+    # SF.8: Use #pragma once instead of header guards
+    - key: modernize-pragma-once.FixHeaderGuards
+      value: 'true'
