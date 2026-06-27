@@ -7,9 +7,8 @@
 - FileRename not working fix - DONE
 - Create simple logger - DONE
 - Migrate Logger to use - DONE
-- File not available and then renamed to watching file not working - InProgress
-- Complete logger migration across source files
-- Add log levels/configuration to logger
+- File not available and then renamed to watching file not working - File created after watcher now available - DONE
+- Add log levels/configuration to logger - InProgress
 - Create file logging based on flag
 - Make verbose build logs optional
 - Stop at CMake if there's any issue during build
@@ -17,6 +16,8 @@
 - Include clang-tidy as part of CMake build system
 - Define ownership-focused classes for OS/OpenSSL resources
 - Implement RAII wrappers for OpenSSL and Windows handles
+- Add scope-guard or RAII-based cleanup for directory handles
+- Extract encryption logic into reusable helper lambdas or functions to reduce duplication
 - Handle `CloseHandle` on abrupt close of exe (Ctrl+C); use `SetConsoleCtrlHandler` for graceful shutdown on Windows
 - Use `std::expected` (C++23) for cleaner error handling
 - Loop password prompt 3 times before giving up and exiting

@@ -78,19 +78,19 @@ void print_action(DWORD action, const std::wstring& filename_w) {
 
 namespace file_watcher {
 
-void watch_directory(std::string& source_path, const std::string& dest_path,
+void watch_directory(std::string& source_path_str, const std::string& dest_path,
                      const std::string& password) {
-    std::filesystem::path source_path_fs = source_path;
-    std::wstring directory_to_watch = source_path_fs.parent_path().wstring();
-    std::wstring file_to_watch = source_path_fs.filename().wstring();
+    std::filesystem::path source_path{source_path_str};
+    std::wstring watch_dir = source_path.parent_path().wstring();
+    std::wstring watch_filename = source_path.filename().wstring();
 
-    auto directory_handle_opt = open_directory_handle(directory_to_watch);
+    auto directory_handle_opt = open_directory_handle(watch_dir);
     if (!directory_handle_opt.has_value()) {
         log.error("Failed to open directory for watching. Error: {}", GetLastError());
         return;
     }
     HANDLE watch_directory_handle = directory_handle_opt.value();
-    log.info("Watching for changes in {}", to_utf8(directory_to_watch));
+    log.info("Watching for changes in {}", to_utf8(watch_dir));
 
     std::array<char, BUFFER_SIZE> buffer;
     DWORD bytes_returned;
@@ -106,45 +106,59 @@ void watch_directory(std::string& source_path, const std::string& dest_path,
         std::optional<std::wstring> rename_old_name;
 
         do {
-            std::wstring filename_wide(notify_info->FileName,
-                                       notify_info->FileNameLength / sizeof(WCHAR));
+            std::wstring filename_notified(notify_info->FileName,
+                                           notify_info->FileNameLength / sizeof(WCHAR));
 
-            print_action(notify_info->Action, filename_wide);
+            print_action(notify_info->Action, filename_notified);
 
-            if (notify_info->Action == FILE_ACTION_MODIFIED && filename_wide == file_to_watch) {
-                log.info("File Modified: {}", to_utf8(filename_wide));
-                int rc = file_encryption::encrypt_file_stream(source_path, dest_path, password);
+            if (notify_info->Action == FILE_ACTION_MODIFIED &&
+                filename_notified == watch_filename) {
+                log.info("File Modified: {}", to_utf8(filename_notified));
+                int rc = file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
                 if (rc == 0) {
-                    log.info("Encryption successful of Modified file {}", to_utf8(filename_wide));
+                    log.info("Encryption successful of Modified file {}",
+                             to_utf8(filename_notified));
                 } else {
-                    log.error("Encryption failed of Modified file {}", to_utf8(filename_wide));
+                    log.error("Encryption failed of Modified file {}", to_utf8(filename_notified));
                 }
 
             } else if (notify_info->Action == FILE_ACTION_RENAMED_OLD_NAME &&
-                       filename_wide == file_to_watch) {
-                log.info("File Renamed from: {}", to_utf8(filename_wide));
-                rename_old_name = filename_wide;
+                       filename_notified == watch_filename) {
+                log.info("File Renamed from: {}", to_utf8(filename_notified));
+                rename_old_name = filename_notified;
 
             } else if (notify_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
-                log.info("File Renamed to: {}", to_utf8(filename_wide));
+                log.info("File Renamed to: {}", to_utf8(filename_notified));
 
-                if (rename_old_name && *rename_old_name == file_to_watch) {
+                if (rename_old_name && *rename_old_name == watch_filename) {
                     log.info("Renamed file matches previous watch target. Updating source path and "
                              "re-encrypting...");
-                    log.info("Old Filename: {}, New Filename: {}, Source path: {}",
-                             to_utf8(*rename_old_name), to_utf8(filename_wide),
-                             source_path_fs.string());
 
-                    source_path_fs.replace_filename(filename_wide);
-                    log.info("Updated source path: {}", source_path_fs.string());
+                    // Updating the file name to original source path here
+                    source_path.replace_filename(filename_notified);
+                    log.info("Old Filename: {}, New Filename: {}, Last Source path: {}, Updated "
+                             "source path: {}",
+                             to_utf8(*rename_old_name), to_utf8(filename_notified),
+                             source_path.string(), source_path.string());
 
-                    source_path = source_path_fs.string();
-                    file_to_watch = filename_wide;
+                    source_path_str = source_path.string();
+                    watch_filename = filename_notified;
                     rename_old_name.reset();
 
                     log.info("Renamed file matches watch target. Updated source path to {}",
-                             to_utf8(file_to_watch));
-                    int rc = file_encryption::encrypt_file_stream(source_path, dest_path, password);
+                             to_utf8(watch_filename));
+                    int rc =
+                        file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
+                    if (rc == 0) {
+                        log.info("Encryption successful.");
+                    } else {
+                        log.error("Encryption failed.");
+                    }
+                } else if (filename_notified == watch_filename) {
+                    // This is created after watcher is open. Refer to main.cpp:L39
+                    log.info("Renamed file matches watch target. Performing initial encryption...");
+                    int rc =
+                        file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
                     if (rc == 0) {
                         log.info("Encryption successful.");
                     } else {

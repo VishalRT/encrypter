@@ -44,7 +44,7 @@ std::string prompt_password(const char* prompt_message) {
         }
     }
 
-    std::cout << "\n";
+    std::cout << std::endl;
     return password_buffer;
 }
 

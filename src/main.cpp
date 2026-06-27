@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
         } else {
             log.warning("Initial encryption failed. Starting watcher anyway");
             // We can still start watching, maybe the file will be created later
+            // or we might need to chage this if required later to create it the file ?
         }
 
         file_watcher::watch_directory(src, DST, pwd);
