@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
 	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
 
-	log.info("C++ Standard version: {}", __cplusplus);
+	log.debug("C++ Standard version: {}", __cplusplus);
 	log.info("OpenSSL version: {}", OpenSSL_version(OPENSSL_VERSION));
 
 	if (argc == 4 && std::string(argv[1]) == "--watch") {
@@ -31,10 +31,10 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 
-		log.info("Performing initial encryption");
+		log.debug("Performing initial encryption");
 		int rc = file_encryption::encrypt_file_stream(src, DST, pwd);
 		if (rc == 0) {
-			log.info("Initial encryption completed: {}", DST);
+			log.debug("Initial encryption completed: {}", DST);
 		} else {
 			log.warning("Initial encryption failed. Starting watcher anyway");
 			// We can still start watching, maybe the file will be created later
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 
 		file_watcher::watch_directory(src, DST, pwd);
 
-		log.info("Exiting watch mode");
+		log.debug("Exiting watch mode");
 		EVP_cleanup();
 		ERR_free_strings();
 		return 0;
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 		ERR_free_strings();
 		// TODO: This is just for testing to be used on service
 		if (rc == 0) {
-			log.info("Encryption completed: {}", dst);
+			log.debug("Encryption completed: {}", dst);
 
 			// Decrypt to decrypted.txt for verification
 			std::filesystem::path src_path(src);
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 			int decrypt_rc =
 				file_encryption::decrypt_file_stream(dst, decrypted_path.string(), pwd);
 			if (decrypt_rc == 0) {
-				log.info("Decryption completed: {}", decrypted_path.string());
+				log.debug("Decryption completed: {}", decrypted_path.string());
 			} else {
 				log.error("Decryption failed with code: {}", decrypt_rc);
 			}

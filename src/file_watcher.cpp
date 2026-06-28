@@ -53,22 +53,22 @@ void print_action(DWORD action, const std::wstring& filename_w) {
 
 	switch (action) {
 		case FILE_ACTION_ADDED:
-			log.info("[PRINT_ACTION]File Created: {}", filename);
+			log.debug("[PRINT_ACTION]File Created: {}", filename);
 			break;
 		case FILE_ACTION_REMOVED:
-			log.info("[PRINT_ACTION]File Deleted: {}", filename);
+			log.debug("[PRINT_ACTION]File Deleted: {}", filename);
 			break;
 		case FILE_ACTION_MODIFIED:
-			log.info("[PRINT_ACTION]File Modified: {}", filename);
+			log.debug("[PRINT_ACTION]File Modified: {}", filename);
 			break;
 		case FILE_ACTION_RENAMED_OLD_NAME:
-			log.info("[PRINT_ACTION]File Renamed (Old Name): {}", filename);
+			log.debug("[PRINT_ACTION]File Renamed (Old Name): {}", filename);
 			break;
 		case FILE_ACTION_RENAMED_NEW_NAME:
-			log.info("[PRINT_ACTION]File Renamed (New Name): {}", filename);
+			log.debug("[PRINT_ACTION]File Renamed (New Name): {}", filename);
 			break;
 		default:
-			log.info("[PRINT_ACTION]Unknown Action: {}", filename);
+			log.debug("[PRINT_ACTION]Unknown Action: {}", filename);
 			break;
 	}
 }
@@ -115,30 +115,31 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 				log.info("File Modified: {}", to_utf8(filename_notified));
 				int rc = file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
 				if (rc == 0) {
-					log.info("Encryption successful of Modified file {}",
-							 to_utf8(filename_notified));
+					log.debug("Encryption successful of Modified file {}",
+							  to_utf8(filename_notified));
 				} else {
 					log.error("Encryption failed of Modified file {}", to_utf8(filename_notified));
 				}
 
 			} else if (notify_info->Action == FILE_ACTION_RENAMED_OLD_NAME &&
 					   filename_notified == watch_filename) {
-				log.info("File Renamed from: {}", to_utf8(filename_notified));
+				log.debug("File Renamed from: {}", to_utf8(filename_notified));
 				rename_old_name = filename_notified;
 
 			} else if (notify_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
-				log.info("File Renamed to: {}", to_utf8(filename_notified));
+				log.debug("File Renamed to: {}", to_utf8(filename_notified));
 
 				if (rename_old_name && *rename_old_name == watch_filename) {
-					log.info("Renamed file matches previous watch target. Updating source path and "
-							 "re-encrypting...");
+					log.debug(
+						"Renamed file matches previous watch target. Updating source path and "
+						"re-encrypting...");
 
 					// Updating the file name to original source path here
 					source_path.replace_filename(filename_notified);
-					log.info("Old Filename: {}, New Filename: {}, Last Source path: {}, Updated "
-							 "source path: {}",
-							 to_utf8(*rename_old_name), to_utf8(filename_notified),
-							 source_path.string(), source_path.string());
+					log.debug("Old Filename: {}, New Filename: {}, Last Source path: {}, Updated "
+							  "source path: {}",
+							  to_utf8(*rename_old_name), to_utf8(filename_notified),
+							  source_path.string(), source_path.string());
 
 					source_path_str = source_path.string();
 					watch_filename = filename_notified;
@@ -149,7 +150,7 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 					int rc =
 						file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
 					if (rc == 0) {
-						log.info("Encryption successful.");
+						log.debug("Encryption successful.");
 					} else {
 						log.error("Encryption failed.");
 					}
@@ -159,12 +160,12 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 					int rc =
 						file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
 					if (rc == 0) {
-						log.info("Encryption successful.");
+						log.debug("Encryption successful.");
 					} else {
 						log.error("Encryption failed.");
 					}
 				} else {
-					log.info("Renamed file does not match watch target. No action taken.");
+					log.debug("Renamed file does not match watch target. No action taken.");
 				}
 			}
 
@@ -175,7 +176,7 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 		} while (true);
 	}
 
-	log.info("\nClosing Handle");
+	log.debug("Closing Watch Directory Handle");
 	CloseHandle(watch_directory_handle);
 }
 
