@@ -9,7 +9,7 @@
 - Migrate Logger to use - DONE
 - File not available and then renamed to watching file not working - File created after watcher now available - DONE
 - Add log levels/configuration to logger & migrate update the logs - DONE
-- Integrate log levels with build flags( Rel, RelDbg, Debug) ?
+- Integrate log levels with build flags( Rel, RelDbg, Debug) ? - DONE
 - Create file logging based on flag
 - Make verbose build logs optional
 - Stop at CMake if there's any issue during build
@@ -33,6 +33,7 @@
 - Install and initialize as a Windows service
 - Add multi-threading to the application logic
 - Create multi-threaded logger
+- Implement config watcher to get logger level instead of environment variable, use std::atomic
 - Implement support for Linux and macOS
 - GUI - Maybe last when most of the things are completed
 

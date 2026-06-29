@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
 #include <format>
 #include <iostream>
 #include <iterator>
@@ -17,7 +20,7 @@ public:
 	};
 
 	static Logger& get_logger() {
-		static Logger logger_instance(Level::Info);
+		static Logger logger_instance(determine_log_level());
 		return logger_instance;
 	}
 
@@ -42,6 +45,24 @@ private:
 	Level log_level_;
 
 	explicit Logger(Level log_level) : log_level_(log_level) {
+	}
+
+	static Level determine_log_level() {
+		const char* log_level_env = std::getenv("APP_LOG_LEVEL");
+
+		if (!log_level_env) {
+			return Level::Info;
+		}
+
+		std::string_view app_log_level{log_level_env};
+
+		if (app_log_level == to_string(Level::Debug)) {
+			return Level::Debug;
+		} else if (app_log_level == to_string(Level::Warning)) {
+			return Level::Warning;
+		} else {
+			return Level::Info;
+		}
 	}
 
 	template <typename... Args>

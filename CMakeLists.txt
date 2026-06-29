@@ -10,12 +10,24 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
 
-if(NOT CMAKE_BUILD_TYPE)
+if(CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
+#OPENSSL
+##Helpers to find openssl and libs
+if(DEFINED ENV{OPENSSL_ROOT_DIR})
+  message(STATUS "Openssl root provided $ENV{OPENSSL_ROOT_DIR}")
+  set(OPENSSL_ROOT_DIR "$ENV{OPENSSL_ROOT_DIR}")
+else()
+  message(WARNING "Openssl root not provided in env variable")
+endif()
+
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL 3.4 REQUIRED)
+# Uncomment to Debug OpenSSL with CMake
 #OPENSSL
 ##Helpers to find openssl and libs
 if(DEFINED ENV{OPENSSL_ROOT_DIR})
@@ -48,6 +60,7 @@ add_executable(${PROJECT_NAME}
   src/file_encryption.cpp
   src/file_watcher.cpp
 )
+
 target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
