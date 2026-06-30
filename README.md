@@ -49,12 +49,13 @@
 # Dev Environment Setup
 
 ## PREREQUISTE
+- **Ofcourse git cli**
 - **Clang 20.1.1** (Used std: C++23)
 - **OpenSSL 3.4.1** (Library: OpenSSL 3.4.1 11 Feb 2025)
 - **Python 3.10.11** (Build script)
 - **VS Code Extension**: clangd with clang-tidy integration
 - **Configuration**: `.clang-tidy` file for naming rules
-- clangd installed and in PATH, same with cmake, clang++ , python, lldb
+- Other packages that are required in PATH: clangd, cmake, clang++, python, lldb
 **NOTE**: Versions and compiler aren't mandatory but are used when this was being developed
 
 ## Windows 
@@ -91,6 +92,37 @@ set MSYS2_PATH=C:/msys64/ucrt64
 ## Linux/macOS Bash:
 ```bash
 TBU
+```
+
+------------------------------------------------------------------------------------------------------------------------------------------
+## Git Submodules
+
+This project uses Git submodules for external dependencies such as `external/CLI11`.
+
+### First-time clone
+```bash
+git clone --recurse-submodules <repo-url>
+cd encrypter
+```
+
+If you already cloned without `--recurse-submodules`, run:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Existing clone
+When pulling latest changes, also update submodules:
+
+```bash
+git pull
+git submodule update --init --recursive
+```
+
+If a submodule was updated to a newer remote commit and you want to fetch that latest remote state:
+
+```bash
+git submodule update --remote --merge
 ```
 
 ------------------------------------------------------------------------------------------------------------------------------------------
