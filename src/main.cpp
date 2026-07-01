@@ -17,8 +17,8 @@ int main(int argc, char** argv) {
 	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
 
-	log.debug("C++ Standard version: {}", __cplusplus);
-	log.info("OpenSSL version: {}", OpenSSL_version(OPENSSL_VERSION));
+	enc_logger::log.debug("C++ Standard version: {}", __cplusplus);
+	enc_logger::log.info("OpenSSL version: {}", OpenSSL_version(OPENSSL_VERSION));
 
 	if (argc == 4 && std::string(argv[1]) == "--watch") {
 		// Keeping src as non-const since we may want to update it on rename events
@@ -27,16 +27,17 @@ int main(int argc, char** argv) {
 		const std::string DST = argv[3];
 		std::string pwd = password_prompt::prompt_password("Enter password for watch mode");
 		if (pwd.empty()) {
-			log.error("Empty password not allowed. Hello this is supposed to be secure ?");
+			enc_logger::log.error(
+				"Empty password not allowed. Hello this is supposed to be secure ?");
 			return 1;
 		}
 
-		log.debug("Performing initial encryption");
+		enc_logger::log.debug("Performing initial encryption");
 		int rc = file_encryption::encrypt_file_stream(src, DST, pwd);
 		if (rc == 0) {
-			log.debug("Initial encryption completed: {}", DST);
+			enc_logger::log.debug("Initial encryption completed: {}", DST);
 		} else {
-			log.warning("Initial encryption failed. Starting watcher anyway");
+			enc_logger::log.warning("Initial encryption failed. Starting watcher anyway");
 			// We can still start watching, maybe the file will be created later
 			// or we might need to chage this if required later to create it the file
 			// ?
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
 
 		file_watcher::watch_directory(src, DST, pwd);
 
-		log.debug("Exiting watch mode");
+		enc_logger::log.debug("Exiting watch mode");
 		EVP_cleanup();
 		ERR_free_strings();
 		return 0;
@@ -54,7 +55,7 @@ int main(int argc, char** argv) {
 		std::string dst = argv[3];
 		std::string pwd = password_prompt::prompt_password("Enter password");
 		if (pwd.empty()) {
-			log.error("Empty password not allowed");
+			enc_logger::log.error("Empty password not allowed");
 			return 1;
 		}
 		int rc = file_encryption::encrypt_file_stream(src, dst, pwd);
@@ -62,7 +63,7 @@ int main(int argc, char** argv) {
 		ERR_free_strings();
 		// TODO: This is just for testing to be used on service
 		if (rc == 0) {
-			log.debug("Encryption completed: {}", dst);
+			enc_logger::log.debug("Encryption completed: {}", dst);
 
 			// Decrypt to decrypted.txt for verification
 			std::filesystem::path src_path(src);
@@ -70,17 +71,17 @@ int main(int argc, char** argv) {
 			int decrypt_rc =
 				file_encryption::decrypt_file_stream(dst, decrypted_path.string(), pwd);
 			if (decrypt_rc == 0) {
-				log.debug("Decryption completed: {}", decrypted_path.string());
+				enc_logger::log.debug("Decryption completed: {}", decrypted_path.string());
 			} else {
-				log.error("Decryption failed with code: {}", decrypt_rc);
+				enc_logger::log.error("Decryption failed with code: {}", decrypt_rc);
 			}
 		}
 		return rc;
 	} else {
-		log.info("Usage for one-time encryption: encrypter --file <source_file> "
-				 "<destination_file>");
-		log.info("Usage for watch mode: encrypter --watch <source_file> "
-				 "<destination_file>");
+		enc_logger::log.info("Usage for one-time encryption: encrypter --file <source_file> "
+							 "<destination_file>");
+		enc_logger::log.info("Usage for watch mode: encrypter --watch <source_file> "
+							 "<destination_file>");
 	}
 
 	return 0;

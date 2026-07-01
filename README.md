@@ -55,6 +55,7 @@
 - **Python 3.10.11** (Build script)
 - **VS Code Extension**: clangd with clang-tidy integration
 - **Configuration**: `.clang-tidy` file for naming rules
+- Optional for clangd users: clangd installed and in PATH, 
 - Other packages that are required in PATH: clangd, cmake, clang++, python, lldb
 **NOTE**: Versions and compiler aren't mandatory but are used when this was being developed
 

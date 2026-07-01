@@ -12,8 +12,6 @@
 #include "file_encryption.h"
 #include "logger.h"
 
-using namespace logger;
-
 namespace {
 
 constexpr size_t BUFFER_SIZE = 2048;
@@ -53,22 +51,22 @@ void print_action(DWORD action, const std::wstring& filename_w) {
 
 	switch (action) {
 		case FILE_ACTION_ADDED:
-			log.debug("[PRINT_ACTION]File Created: {}", filename);
+			enc_logger::log.debug("[PRINT_ACTION]File Created: {}", filename);
 			break;
 		case FILE_ACTION_REMOVED:
-			log.debug("[PRINT_ACTION]File Deleted: {}", filename);
+			enc_logger::log.debug("[PRINT_ACTION]File Deleted: {}", filename);
 			break;
 		case FILE_ACTION_MODIFIED:
-			log.debug("[PRINT_ACTION]File Modified: {}", filename);
+			enc_logger::log.debug("[PRINT_ACTION]File Modified: {}", filename);
 			break;
 		case FILE_ACTION_RENAMED_OLD_NAME:
-			log.debug("[PRINT_ACTION]File Renamed (Old Name): {}", filename);
+			enc_logger::log.debug("[PRINT_ACTION]File Renamed (Old Name): {}", filename);
 			break;
 		case FILE_ACTION_RENAMED_NEW_NAME:
-			log.debug("[PRINT_ACTION]File Renamed (New Name): {}", filename);
+			enc_logger::log.debug("[PRINT_ACTION]File Renamed (New Name): {}", filename);
 			break;
 		default:
-			log.debug("[PRINT_ACTION]Unknown Action: {}", filename);
+			enc_logger::log.debug("[PRINT_ACTION]Unknown Action: {}", filename);
 			break;
 	}
 }
@@ -85,11 +83,11 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 
 	auto directory_handle_opt = open_directory_handle(watch_dir);
 	if (!directory_handle_opt.has_value()) {
-		log.error("Failed to open directory for watching. Error: {}", GetLastError());
+		enc_logger::log.error("Failed to open directory for watching. Error: {}", GetLastError());
 		return;
 	}
 	HANDLE watch_directory_handle = directory_handle_opt.value();
-	log.info("Watching for changes in {}", to_utf8(watch_dir));
+	enc_logger::log.info("Watching for changes in {}", to_utf8(watch_dir));
 
 	std::array<char, BUFFER_SIZE> buffer;
 	DWORD bytes_returned;
@@ -112,60 +110,65 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 
 			if (notify_info->Action == FILE_ACTION_MODIFIED &&
 				filename_notified == watch_filename) {
-				log.info("File Modified: {}", to_utf8(filename_notified));
+				enc_logger::log.info("File Modified: {}", to_utf8(filename_notified));
 				int rc = file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
 				if (rc == 0) {
-					log.debug("Encryption successful of Modified file {}",
-							  to_utf8(filename_notified));
+					enc_logger::log.debug("Encryption successful of Modified file {}",
+										  to_utf8(filename_notified));
 				} else {
-					log.error("Encryption failed of Modified file {}", to_utf8(filename_notified));
+					enc_logger::log.error("Encryption failed of Modified file {}",
+										  to_utf8(filename_notified));
 				}
 
 			} else if (notify_info->Action == FILE_ACTION_RENAMED_OLD_NAME &&
 					   filename_notified == watch_filename) {
-				log.debug("File Renamed from: {}", to_utf8(filename_notified));
+				enc_logger::log.debug("File Renamed from: {}", to_utf8(filename_notified));
 				rename_old_name = filename_notified;
 
 			} else if (notify_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
-				log.debug("File Renamed to: {}", to_utf8(filename_notified));
+				enc_logger::log.debug("File Renamed to: {}", to_utf8(filename_notified));
 
 				if (rename_old_name && *rename_old_name == watch_filename) {
-					log.debug(
+					enc_logger::log.debug(
 						"Renamed file matches previous watch target. Updating source path and "
 						"re-encrypting...");
 
 					// Updating the file name to original source path here
 					source_path.replace_filename(filename_notified);
-					log.debug("Old Filename: {}, New Filename: {}, Last Source path: {}, Updated "
-							  "source path: {}",
-							  to_utf8(*rename_old_name), to_utf8(filename_notified),
-							  source_path.string(), source_path.string());
+					enc_logger::log.debug(
+						"Old Filename: {}, New Filename: {}, Last Source path: {}, Updated "
+						"source path: {}",
+						to_utf8(*rename_old_name), to_utf8(filename_notified), source_path.string(),
+						source_path.string());
 
 					source_path_str = source_path.string();
 					watch_filename = filename_notified;
 					rename_old_name.reset();
 
-					log.info("Renamed file matches watch target. Updated source path to {}",
-							 to_utf8(watch_filename));
+					enc_logger::log.info(
+						"Renamed file matches watch target. Updated source path to {}",
+						to_utf8(watch_filename));
 					int rc =
 						file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
 					if (rc == 0) {
-						log.debug("Encryption successful.");
+						enc_logger::log.debug("Encryption successful.");
 					} else {
-						log.error("Encryption failed.");
+						enc_logger::log.error("Encryption failed.");
 					}
 				} else if (filename_notified == watch_filename) {
 					// This is created after watcher is open. Refer to main.cpp:L39
-					log.info("Renamed file matches watch target. Performing initial encryption...");
+					enc_logger::log.info(
+						"Renamed file matches watch target. Performing initial encryption...");
 					int rc =
 						file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
 					if (rc == 0) {
-						log.debug("Encryption successful.");
+						enc_logger::log.debug("Encryption successful.");
 					} else {
-						log.error("Encryption failed.");
+						enc_logger::log.error("Encryption failed.");
 					}
 				} else {
-					log.debug("Renamed file does not match watch target. No action taken.");
+					enc_logger::log.debug(
+						"Renamed file does not match watch target. No action taken.");
 				}
 			}
 
@@ -176,7 +179,7 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 		} while (true);
 	}
 
-	log.debug("Closing Watch Directory Handle");
+	enc_logger::log.debug("Closing Watch Directory Handle");
 	CloseHandle(watch_directory_handle);
 }
 

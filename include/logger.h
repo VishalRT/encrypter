@@ -9,7 +9,7 @@
 #include <ostream>
 #include <utility>
 
-namespace logger {
+namespace enc_logger {
 class Logger {
 public:
 	enum class Level {
@@ -45,16 +45,18 @@ private:
 	Level log_level_;
 
 	explicit Logger(Level log_level) : log_level_(log_level) {
+		std::cout << "Ctor Log Level: " << to_string(log_level_) << std::endl;
 	}
 
 	static Level determine_log_level() {
 		const char* log_level_env = std::getenv("APP_LOG_LEVEL");
-
 		if (!log_level_env) {
 			return Level::Info;
 		}
 
 		std::string_view app_log_level{log_level_env};
+
+		std::cout << "Log Level from ENV: " << app_log_level << std::endl;
 
 		if (app_log_level == to_string(Level::Debug)) {
 			return Level::Debug;
@@ -95,4 +97,4 @@ private:
 // Global logger instance - use this throughout the codebase
 inline Logger& log = Logger::get_logger();
 
-} // namespace logger
+} // namespace enc_logger

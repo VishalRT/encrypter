@@ -9,8 +9,6 @@
 
 namespace password_prompt {
 
-using namespace logger;
-
 namespace {
 constexpr int BACKSPACE_CHAR = '\b';
 constexpr int CTRL_C_CHAR = 3;
@@ -19,7 +17,7 @@ constexpr char HIDDEN_INPUT_MASK = '*';
 } // namespace
 
 std::string prompt_password(const char* prompt_message) {
-	logger::log.info("{} (input hidden)", prompt_message);
+	enc_logger::log.info("{} (input hidden)", prompt_message);
 	std::cout.flush();
 
 	std::string password_buffer;
