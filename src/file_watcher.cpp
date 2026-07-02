@@ -75,9 +75,9 @@ void print_action(DWORD action, const std::wstring& filename_w) {
 
 namespace file_watcher {
 
-void watch_directory(std::string& source_path_str, const std::string& dest_path,
+void watch_directory(std::string& source_file, const std::string& destination_file,
 					 const std::string& password) {
-	std::filesystem::path source_path{source_path_str};
+	std::filesystem::path source_path{source_file};
 	std::wstring watch_dir = source_path.parent_path().wstring();
 	std::wstring watch_filename = source_path.filename().wstring();
 
@@ -111,7 +111,8 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 			if (notify_info->Action == FILE_ACTION_MODIFIED &&
 				filename_notified == watch_filename) {
 				enc_logger::log.info("File Modified: {}", to_utf8(filename_notified));
-				int rc = file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
+				int rc =
+					file_encryption::encrypt_file_stream(source_file, destination_file, password);
 				if (rc == 0) {
 					enc_logger::log.debug("Encryption successful of Modified file {}",
 										  to_utf8(filename_notified));
@@ -130,26 +131,27 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 
 				if (rename_old_name && *rename_old_name == watch_filename) {
 					enc_logger::log.debug(
-						"Renamed file matches previous watch target. Updating source path and "
+						"Renamed file matches previous watch target. Updating source file path and "
 						"re-encrypting...");
+
+					enc_logger::log.debug(
+						"Old Filename: {}, \n\tNew Filename: {},"
+						"\n\tOld Source path: {},"
+						"\n\tNew Source path: {}",
+						to_utf8(*rename_old_name), to_utf8(filename_notified), source_path.string(),
+						(source_path.parent_path() / to_utf8(filename_notified)).string());
 
 					// Updating the file name to original source path here
 					source_path.replace_filename(filename_notified);
-					enc_logger::log.debug(
-						"Old Filename: {}, New Filename: {}, Last Source path: {}, Updated "
-						"source path: {}",
-						to_utf8(*rename_old_name), to_utf8(filename_notified), source_path.string(),
-						source_path.string());
-
-					source_path_str = source_path.string();
+					source_file = source_path.string();
 					watch_filename = filename_notified;
 					rename_old_name.reset();
 
 					enc_logger::log.info(
 						"Renamed file matches watch target. Updated source path to {}",
-						to_utf8(watch_filename));
-					int rc =
-						file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
+						source_file);
+					int rc = file_encryption::encrypt_file_stream(source_file, destination_file,
+																  password);
 					if (rc == 0) {
 						enc_logger::log.debug("Encryption successful.");
 					} else {
@@ -159,8 +161,8 @@ void watch_directory(std::string& source_path_str, const std::string& dest_path,
 					// This is created after watcher is open. Refer to main.cpp:L39
 					enc_logger::log.info(
 						"Renamed file matches watch target. Performing initial encryption...");
-					int rc =
-						file_encryption::encrypt_file_stream(source_path_str, dest_path, password);
+					int rc = file_encryption::encrypt_file_stream(source_file, destination_file,
+																  password);
 					if (rc == 0) {
 						enc_logger::log.debug("Encryption successful.");
 					} else {

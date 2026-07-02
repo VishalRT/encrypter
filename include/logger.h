@@ -45,7 +45,6 @@ private:
 	Level log_level_;
 
 	explicit Logger(Level log_level) : log_level_(log_level) {
-		std::cout << "Ctor Log Level: " << to_string(log_level_) << std::endl;
 	}
 
 	static Level determine_log_level() {

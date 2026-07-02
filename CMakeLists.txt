@@ -7,8 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # We are passing in build flags that are working. These aren't really required
-set(CMAKE_C_COMPILER "clang")
-set(CMAKE_CXX_COMPILER "clang++")
+# set(CMAKE_C_COMPILER "clang")
+# set(CMAKE_CXX_COMPILER "clang++")
 
 if(CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
@@ -54,6 +54,9 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 # Also add explicit compile flags to ensure includes are passed to clangd
 add_compile_options(-I${OPENSSL_INCLUDE_DIR})
 
+# CLI11
+add_subdirectory(external/CLI11)
+
 add_executable(${PROJECT_NAME}
   src/main.cpp
   src/password_prompt.cpp
@@ -64,7 +67,11 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE kernel32 OpenSSL::Crypto)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+  kernel32 OpenSSL::Crypto
+  CLI11::CLI11
+)
 
 # C++ Core Guidelines enforcement with clang-tidy
 option(ENABLE_CLANG_TIDY_CHECKS "Enable clang-tidy naming checks" OFF)
