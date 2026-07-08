@@ -5,7 +5,6 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 ////////////////////////////////// Project includes
-#include "CLI/CLI.hpp"
 #include "file_encryption.h"
 #include "file_watcher.h"
 #include "logger.h"
@@ -14,6 +13,8 @@
 int main(int argc, char** argv) {
 	std::string src_file;
 	std::string dst_file;
+	std::string file_log_path{};
+	bool console_log_enabled = false;
 
 	CLI::App app{"Encrypter"};
 
@@ -22,16 +23,27 @@ int main(int argc, char** argv) {
 		->required(true);
 	file_mode->add_option("-d, --destination", dst_file,
 						  "Destination file path to store encrypted data");
+	file_mode->fallthrough(true);
 
 	CLI::App* watch_mode = app.add_subcommand("watch", "Directory file watcher");
 	watch_mode->add_option("-s, --source", src_file, "Source directory path to watch")
 		->required(true);
 	CLI::Option* destination_option = watch_mode->add_option(
 		"-d, --destination", dst_file, "Destination directory path to store encrypted data");
+	watch_mode->fallthrough(true);
 
 	app.require_subcommand(1);
+	app.add_flag("--console-log-enabled", console_log_enabled,
+				 "Enable logging into a console, One will be opened up if not open");
+
+	// disabling default file logging till GUI is integrated, will enabled by default in GUI
+	app.add_option("--file-log-path", file_log_path,
+				   "path for logging file if not passed default path will be used");
 
 	CLI11_PARSE(app, argc, argv);
+
+	enc_logger::log.set_console_log_enabled(console_log_enabled);
+	enc_logger::log.set_file_log_enabled(file_log_path);
 
 	// Update destination if user hasn't passed it, prepending "enc_" to the filename
 	if (destination_option->count() == 0) {

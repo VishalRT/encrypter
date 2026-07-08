@@ -28,9 +28,9 @@ Checks: '-*,readability-identifier-naming,
     #modernize-use-nodiscard,                                # ES.48
     modernize-use-override,                                 # C.128
     # --- PERFORMANCE & BUG PREVENTION ---
-    #performance-move-const-arg,                             # ES.56
-    #performance-unnecessary-copy-initialization,            # P.9
-    #performance-unnecessary-value-param,                    # F.16
+    performance-move-const-arg,                             # ES.56
+    performance-unnecessary-copy-initialization,            # P.9
+    performance-unnecessary-value-param,                    # F.16
     #bugprone-forwarding-reference-overload                  # C.163
   '
 CheckOptions:

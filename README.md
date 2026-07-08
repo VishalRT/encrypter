@@ -10,32 +10,63 @@
 - File not available and then renamed to watching file not working - File created after watcher now available - DONE
 - Add log levels/configuration to logger & migrate update the logs - DONE
 - Integrate log levels with build flags( Rel, RelDbg, Debug) ? - DONE
-- Create file logging based on flag
-- Make verbose build logs optional
-- Stop at CMake if there's any issue during build
-- Add `CMAKE_GENERATOR` environment variable/flag to select build generator (Ninja or Make)
+- Integrate CLI11 cli argument parser - DONE
+- Create file logging based on flag - DONE
+
 - Include clang-tidy as part of CMake build system
+- - Include clang-format configuration for consistent formatting
+- Add AddressSanitizer (ASan) build configuration
+- Add UndefinedBehaviorSanitizer (UBSan) build configuration
+- Enable a strong compiler warning set (-Wall, -Wextra, -Wpedantic)
+- Stop at CMake if there's any issue during build
+- Make verbose build logs optional
+- Add `CMAKE_GENERATOR` environment variable/flag to select build generator (Ninja or Make)
+
 - Define ownership-focused classes for OS/OpenSSL resources
 - Implement RAII wrappers for OpenSSL and Windows handles
 - Add scope-guard or RAII-based cleanup for directory handles
-- Extract encryption logic into reusable helper lambdas or functions to reduce duplication
-- Handle `CloseHandle` on abrupt close of exe (Ctrl+C); use `SetConsoleCtrlHandler` for graceful shutdown on Windows
 - Use `std::expected` (C++23) for cleaner error handling
+- Extract encryption logic into reusable helper lambdas or functions to reduce duplication
+- Refactor toward an OOP application structure
+
 - Loop password prompt 3 times before giving up and exiting
 - Avoid `std::string` for passwords; research immutable/string memory behavior in C++
-- Protect password in memory to avoid exposure in dumps (use byte buffer/secure memory; research more)
+- Protect password in memory to avoid exposure in dumps (secure byte buffer / secure allocator / OpenSSL cleansing; research more)
+- Handle `CloseHandle` on abrupt close of exe (Ctrl+C); use `SetConsoleCtrlHandler` for graceful shutdown on Windows
+
 - Encrypt file to specific destination
 - Only decrypt in `main.cpp` when required
 - Decide when to decrypt/open files using Windows/default app to make them available to the user
-- Define an opening point for files: decrypt when the file is opened, then re-encrypt when appropriate
+- Define a complete open/decrypt/re-encrypt workflow(protocol handler , custom file extension? check for more): decrypt when the file is opened, then re-encrypt when changes are done
+
 - Fix duplicate/rapid modify events by capturing deltas as required (Notepad++, VS Code dual modified calls)
-- Refactor toward an OOP application structure
-- Install and initialize as a Windows service
 - Add multi-threading to the application logic
 - Create multi-threaded logger
 - Implement config watcher to get logger level instead of environment variable, use std::atomic
-- Implement support for Linux and macOS
+- Add ThreadSanitizer (TSan) build configuration and validate watch mode
+
+- Separate the encryption engine into a reusable core library
+    CLI becomes one frontend
+    Future GUI becomes another frontend
+    Keep encryption logic independent of UI
+- Introduce a formal project directory layout (src, include, platform, crypto, watcher, logger, service, cmake, scripts, docs, tests, external)
+- Install and initialize as a Windows service
+
+- Implement support for Linux,
+- Implement support for macOS
+- Evaluate migrating third-party dependencies to vcpkg if dependency count grows
+
+- Add automated unit tests
+- Add encryption/decryption regression tests
+- Add watcher tests
+- Add CLI tests
+- Add logger tests
+- Add fuzz testing for encrypted file parser and decryption logic (maybe?)
+
 - GUI - Maybe last when most of the things are completed
+- Disabling default file logging till GUI is integrated, Enable it back onc GUI is up
+- By default file logging is disabled and console is enabled, reverse this after GUI is integrated
+- If console log is enabled log to console. if console isn't open open a new window and start logging there
 
 ----------------------------------------------------------------------------------------------------------------------------------------
 
