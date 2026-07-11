@@ -13,8 +13,8 @@
 - Integrate CLI11 cli argument parser - DONE
 - Create file logging based on flag - DONE
 
-- Include clang-tidy as part of CMake build system
-- - Include clang-format configuration for consistent formatting
+- Include clang-tidy as part of CMake build system - DONE
+- Include clang-format configuration for consistent formatting
 - Add AddressSanitizer (ASan) build configuration
 - Add UndefinedBehaviorSanitizer (UBSan) build configuration
 - Enable a strong compiler warning set (-Wall, -Wextra, -Wpedantic)

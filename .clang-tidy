@@ -6,7 +6,7 @@
 # SF.1-SF.3: readability-inconsistent-declaration-parameter-name
 Checks: '-*,readability-identifier-naming,
     modernize-pragma-once,
-    misc-include-cleaner,
+    #misc-include-cleaner, #Removing this as it's throwing issues with Windows sdk
     readability-inconsistent-declaration-parameter-name,
     cppcoreguidelines-avoid-const-or-ref-data-members,      # C.12
     cppcoreguidelines-avoid-c-arrays,                       # SL.con.1

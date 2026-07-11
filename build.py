@@ -42,10 +42,11 @@ def run_cmd(cmd):
     subprocess.run(shlex.split(cmd), stdout=None, stderr=None, text=True)
 
 
-def clean():
+def clean(args):
     print("----------- Performing CMake Clean --------------")
     cmd = f"cmake --build {OUTPUT_DIR} --target clean"
-    # cmd=f'cmake --build {OUTPUT_DIR} --target clean VERBOSE=1'
+    if args.verbose:
+        cmd += " VERBOSE=1"
     run_cmd(cmd)
     print("----------- CMake Clean Done --------------")
 
@@ -85,8 +86,9 @@ def build(build_type, args):
         config_cmd += " --fresh"
 
     # Enable clang_tidy option in CMake File
-    if hasattr(args, "clang_tidy_check") and args.clang_tidy_check:
-        config_cmd += " -DENABLE_CLANG_TIDY_CHECKS:BOOL=ON"
+    if getattr(args, "clang_tidy_check", False):
+        print("Enabling clang-tidy checks...")
+        config_cmd += " -DENABLE_CLANG_TIDY:BOOL=ON"
 
     # Run CMake configuration first
     run_cmd(config_cmd)
@@ -97,9 +99,12 @@ def build(build_type, args):
     # Then build project
     build_cmd = f"cmake --build {OUTPUT_DIR}"
 
+    if args.verbose:
+        build_cmd += " --verbose"
+
     # Run clang-tidy if --clang-tidy-check is passed as argument
-    if hasattr(args, "clang_tidy_check") and args.clang_tidy_check:
-        build_cmd += " --target clang-tidy-check"
+    # if hasattr(args, "clang_tidy_check") and args.clang_tidy_check:
+    #     build_cmd += " --target clang-tidy-check"
 
     # Add clean-first if fresh build
     if hasattr(args, "fresh") and args.fresh:
@@ -161,6 +166,9 @@ def main():
         "--clang-tidy-check", action="store_true", help="Run clang-tidy checks."
     )
     parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Cmake Verbose logging."
+    )
+    parser.add_argument(
         "-h", "--help", action="store_true", help="Show this help message and exit."
     )
 
@@ -178,7 +186,7 @@ def main():
     if args.build_action == BuildAction.REBUILD:
         build(args.build_type, args)
     elif args.build_action == BuildAction.CLEAN:
-        clean()
+        clean(args)
         build(args.build_type, args)
     elif args.build_action == BuildAction.FRESH:
         args.fresh = True  # Add fresh attribute to args

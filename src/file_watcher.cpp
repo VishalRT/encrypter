@@ -6,7 +6,6 @@
 #include <optional>
 #include <string>
 
-#include <fileapi.h>
 #include <windows.h>
 
 #include "file_encryption.h"
