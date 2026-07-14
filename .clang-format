@@ -1,16 +1,52 @@
 Language: Cpp
 BasedOnStyle: LLVM
-ColumnLimit: 100
-AllowShortFunctionsOnASingleLine: None
-KeepEmptyLinesAtTheStartOfBlocks: false
-BreakBeforeBraces: Attach
-Standard: Latest
-IndentCaseLabels: true
-AlignAfterOpenBracket: Align
-AccessModifierOffset: -4
-PointerAlignment: Left
 
+# NL.17/18: K&R Brace style
+BreakBeforeBraces: Attach
+ColumnLimit: 100
+Standard: Latest
+
+# Tab usage (Strictly spaces for consistency)
+UseTab: Never
 IndentWidth: 4
 TabWidth: 4
-UseTab: Always # Options: Always (Uses real tabs), ForIndentation, Never
 ContinuationIndentWidth: 4
+
+# Pointer Alignment (NL.16: "int* p" is preferred by Stroustrup)
+PointerAlignment: Left
+
+# Access Modifier Offset
+AccessModifierOffset: -4
+
+# Modern Pragmatism
+AllowShortFunctionsOnASingleLine: Inline # Allows trivial one-line getters
+KeepEmptyLinesAtTheStartOfBlocks: false
+IndentCaseLabels: true
+AlignAfterOpenBracket: Align
+
+# Following https://google.github.io/styleguide/cppguide.html#Names_and_Order_of_Includes
+# Because why not ? It's Chromium(Google)
+SortIncludes: true
+IncludeBlocks: Regroup
+# If the header name matches the cpp file base name, it's the main header.
+# including test files includes in case for future
+IncludeIsMainRegex: '([-_](test|unittest))?$'
+IncludeCategories:
+  # 1. C System Headers (<...h>)
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+    SortPriority:    1
+  # 2. C++ Standard Library Headers (<...> with no dots)
+  - Regex:           '^<[^.]*>$'
+    Priority:        2
+    SortPriority:    2
+  # Include headers from std/third-party or ? include paths ? in "<...>"
+  - Regex:           '^<.*>'
+    Priority:        3
+    SortPriority:    3
+  # 4. Local Project Headers ("...")
+  # Include headers from local project ("...")
+  - Regex:           '^".*"'
+    Priority:        4
+    SortPriority:    4
+ReflowComments: true

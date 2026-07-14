@@ -21,6 +21,6 @@ namespace file_watcher {
  * @note Logs file system events and encryption status to stdout/stderr
  */
 void watch_directory(std::string& source_file, const std::string& destination_file,
-					 const std::string& password);
+                     const std::string& password);
 
 } // namespace file_watcher
