@@ -2,7 +2,6 @@
 
 #include <conio.h>
 
-#include <cmath>
 #include <iostream>
 #include <string>
 

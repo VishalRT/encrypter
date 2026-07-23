@@ -91,13 +91,19 @@ void watch_directory(std::string& source_file, const std::string& destination_fi
     std::array<char, BUFFER_SIZE> buffer;
     DWORD bytes_returned;
 
-    while (ReadDirectoryChangesW(watch_directory_handle, buffer.data(),
-                                 static_cast<DWORD>(buffer.size()),
-                                 FALSE, // Don't watch subdirectories
-                                 FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME,
-                                 &bytes_returned, nullptr, nullptr)) {
-        FILE_NOTIFY_INFORMATION* notify_info =
-            reinterpret_cast<FILE_NOTIFY_INFORMATION*>(buffer.data());
+    while (true) {
+        WINBOOL result = ReadDirectoryChangesW(
+            watch_directory_handle, buffer.data(), static_cast<DWORD>(buffer.size()),
+            FALSE, // Don't watch subdirectories
+            FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME, &bytes_returned, nullptr,
+            nullptr);
+        if (!static_cast<bool>(result)) {
+            DWORD error = GetLastError();
+            enc_logger::log.error("ReadDirectoryChangesW failed. Error: {}", error);
+            continue;
+        }
+
+        auto* notify_info = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(buffer.data());
 
         std::optional<std::wstring> rename_old_name;
 

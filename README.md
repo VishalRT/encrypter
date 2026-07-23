@@ -15,7 +15,7 @@
 
 - Include clang-tidy as part of CMake build system - DONE
 - Include clang-format configuration for consistent formatting - DONE
-- Add AddressSanitizer (ASan) build configuration
+- Add AddressSanitizer (ASan) build configuration - InProgress
 - Add UndefinedBehaviorSanitizer (UBSan) build configuration
 - Enable a strong compiler warning set (-Wall, -Wextra, -Wpedantic)
 - Stop at CMake if there's any issue during build
@@ -90,35 +90,51 @@
 - Other packages that are required in PATH: clangd, cmake, clang++, python, lldb
 **NOTE**: Versions and compiler aren't mandatory but are used when this was being developed
 
-## Windows 
-- **Toolchain**: MSYS2 / MinGW-w64 (UCRT64)
-- We are using msys2 to use clang and the supported win32 API's provided by minGW. So that we don't have to use clang by msvc.
-- **Windows API Headers** : MinGW-w64 Headers v12.0.0 from Universal C Runtime (UCRT)
+## Windows (Recommended: MSYS2 CLANG64)
+- **Toolchain**: MSYS2 / MinGW-w64 (`CLANG64`)
+- If switching environments, delete the existing `build/` directory and configure again.
+- Default MSYS2 CLANG64 paths:
+  - Toolchain root: `C:/msys64/clang64`
+  - Binaries/PATH entry: `C:/msys64/clang64/bin`
+  - OpenSSL root for CMake: `C:/msys64/clang64` (In case installed via msys2 below)
 
-### Windows PowerShell:
-```powershell
-# Set OpenSSL root directory
-$env:OPENSSL_ROOT_DIR = "C:/msys64/ucrt64"
+Install dependencies from the **MSYS2 CLANG64** terminal:
+```bash
+pacman -Syu
+pacman -S mingw-w64-clang-x86_64-clang mingw-w64-clang-x86_64-compiler-rt mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja mingw-w64-clang-x86_64-openssl mingw-w64-clang-x86_64-python
 
-# Add compiler/library paths to PATH if needed
-$env:PATH = "C:/msys64/ucrt64/bin;$env:PATH"
-
-# Optional: Set MSYS2 environment variables for UCRT64
-$env:MSYSTEM = "UCRT64"
-$env:MSYS2_PATH = "C:/msys64/ucrt64"
+#Optional clang-tidy
+pacman -S mingw-w64-clang-x86_64-clang-tools-extra
 ```
 
-### Windows CMD:
+`compiler-rt` is required for sanitizer builds such as AddressSanitizer.
+
+### Windows PowerShell configuration
+If building from PowerShell, add the CLANG64 binary path before other toolchains so CMake finds the MSYS2 tools first:
+
+```powershell
+# Encrypter Project (MSYS2 CLANG64)
+$env:PATH = "C:/msys64/clang64/bin;" + $env:PATH
+$env:OPENSSL_ROOT_DIR = "C:/msys64/clang64"
+$env:MSYSTEM = "CLANG64"
+```
+
+Pwsh Function for project path update in case required :
+```powershell
+function Start-EncrypterEnv {
+    $env:PATH = "C:/msys64/clang64/bin;" + $env:PATH
+    $env:OPENSSL_ROOT_DIR = "C:/msys64/clang64"
+    $env:MSYSTEM = "CLANG64"
+    Write-Host "Encrypter CLANG64 environment loaded." -ForegroundColor Green
+}
+```
+
+### Windows CMD
 ```cmd
-# Set OpenSSL root directory (Used by cmake to identify includes/libs)
-set OPENSSL_ROOT_DIR=C:/msys64/ucrt64
-
-# Add bin to path
-set PATH=C:/msys64/ucrt64/bin;%PATH%
-
-# OPTIONAL: Set OpenSSL root directory (Used by cmake to identify includes/libs)
-set MSYSTEM=UCRT64
-set MSYS2_PATH=C:/msys64/ucrt64
+REM Encrypter Project (MSYS2 CLANG64)
+set PATH=C:/msys64/clang64/bin;%PATH%
+set OPENSSL_ROOT_DIR=C:/msys64/clang64
+set MSYSTEM=CLANG64
 ```
 
 ## Linux/macOS Bash:

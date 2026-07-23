@@ -72,14 +72,17 @@ def build(build_type, args):
     # cmake -G "Ninja Multi-Config" -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe -S . -B build/
 
     # Ninja Cmd
-    config_cmd = f'cmake -G "Ninja" \
-            -DCMAKE_BUILD_TYPE={build_type_str} \
-            -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
+    config_cmd = f'cmake -G "Ninja" -DCMAKE_BUILD_TYPE={build_type_str} -S {CURRENT_PROJECT_DIR} -B {OUTPUT_DIR}'
 
-    config_cmd += " -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe"
+    #config_cmd += " -DCMAKE_C_COMPILER=clang.exe -DCMAKE_CXX_COMPILER=clang++.exe"
 
     # Always export compile commands for clangd IntelliSense
     config_cmd += " -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON"
+
+    # Enable ASan option in CMake File
+    if args.asan:
+        print("Enabling AddressSanitizer (ASan)...")
+        config_cmd += " -DENABLE_ASAN:BOOL=ON"
 
     # clean cmake cache from build diretory
     if hasattr(args, "fresh") and args.fresh:
@@ -90,6 +93,7 @@ def build(build_type, args):
         print("Enabling clang-tidy checks...")
         config_cmd += " -DENABLE_CLANG_TIDY:BOOL=ON"
 
+    print(f"Executing : {config_cmd}")
     # Run CMake configuration first
     run_cmd(config_cmd)
     print("CMake Configuration Completed, Build Files Generated!")
@@ -110,6 +114,7 @@ def build(build_type, args):
     if hasattr(args, "fresh") and args.fresh:
         build_cmd += " --clean-first"
 
+    print(f"Executing : {build_cmd}")
     run_cmd(build_cmd)
     print("----------- Build Finished --------------")
 
@@ -121,7 +126,7 @@ Usage:
   python build.py [--build-action {rebuild,clean,fresh}] [--build-type {debug,release,relwithdebinfo}] [--clang-tidy-check]
 
 Options:
-  --build-action    Build action to perform:
+  --build-action    Build action to perform: (default: rebuild)
                      - rebuild          : Normal incremental build
                      - clean            : Clean build targets then rebuild
                      - fresh            : Complete build directory cleanup with fresh build
@@ -131,13 +136,16 @@ Options:
                      - release          : Release build
                      - relwithdebinfo   : Release with debug info
 
-  --clang-tidy-check Run clang-tidy checks during build.
+  --clang-tidy-check Run clang-tidy checks during build. (default: disabled)
+
+  --verbose[-v]     Enable Cmake verbose output. (default: disabled)
+  --asan[-a]        Enable AddressSanitizer (ASan). (default: disabled)
 
 Examples:
   python build.py --build-action rebuild --build-type debug
   python build.py --build-action clean --build-type release
-  python build.py --build-action fresh --build-type relwithdebinfo
-  python build.py --build-action fresh --clang-tidy-check
+  python build.py --build-action fresh --build-type relwithdebinfo --clang-tidy-check
+  python build.py --clang-tidy-check
 
 --------------- Python CMake Build Helper --------------
 """
@@ -169,6 +177,9 @@ def main():
         "-v", "--verbose", action="store_true", help="Cmake Verbose logging."
     )
     parser.add_argument(
+        "-a", "--asan", action="store_true", help="Enable AddressSanitizer (Asan). Note:Only for Debug builds for valid reasons"
+    )
+    parser.add_argument(
         "-h", "--help", action="store_true", help="Show this help message and exit."
     )
 
@@ -183,6 +194,11 @@ def main():
         sys.exit(1)
 
     print("----------- Starting Python Script --------------")
+
+    if args.asan and args.build_type != BuildType.DEBUG:
+        print("Warning: ASan is only supported for Debug builds. Skipping ASan...")
+        args.asan = False
+
     if args.build_action == BuildAction.REBUILD:
         build(args.build_type, args)
     elif args.build_action == BuildAction.CLEAN:

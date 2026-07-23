@@ -66,6 +66,13 @@ if(ENABLE_CLANG_TIDY)
       ${CLANG_TIDY_EXE})
 endif()
 
+# AddressSanitizer (ASan) option
+option(ENABLE_ASAN "Enable AddressSanitizer (ASan)" OFF)
+
+if(ENABLE_ASAN)
+  add_compile_options(-fsanitize=address)
+  add_link_options(-fsanitize=address)
+endif()
 
 add_executable(${PROJECT_NAME}
   src/main.cpp
@@ -73,8 +80,6 @@ add_executable(${PROJECT_NAME}
   src/file_encryption.cpp
   src/file_watcher.cpp
 )
-
-
 
 target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include

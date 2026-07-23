@@ -9,12 +9,14 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <print>
 #include <string>
 #include <string_view>
 #include <utility>
 
 namespace enc_logger {
 
+// TODO: To be moved to a more appropriate location
 inline const std::filesystem::path DEFAULT_LOG_FILE_PATH{
     "C:/Users/Vishal/Documents/workspace/encrypter/build/run_log/log.log"};
 
@@ -104,13 +106,13 @@ private:
 
     static Level determine_log_level() {
         const char* log_level_env = std::getenv("APP_LOG_LEVEL");
-        if (!log_level_env) {
+        if (log_level_env == nullptr) {
             return Level::Info;
         }
 
         std::string_view app_log_level{log_level_env};
-
         std::cout << "Log Level from ENV: " << app_log_level << std::endl;
+        std::println("Log Level from Env: {}", app_log_level);
 
         if (app_log_level == to_string(Level::Debug)) {
             return Level::Debug;
@@ -128,18 +130,16 @@ private:
             return;
         }
 
-        std::string formatted_msg = std::format("[{}] ", to_string(severity)) +
-                                    std::format(fmt_str, std::forward<Args>(args)...);
+        std::string formatted_string = std::format("[{}] ", to_string(severity)) +
+                                       std::format(fmt_str, std::forward<Args>(args)...);
 
         if (log_file_stream_ && log_file_stream_->good()) {
-            *log_file_stream_ << formatted_msg;
+            *log_file_stream_ << formatted_string;
             *log_file_stream_ << '\n';
         }
 
         if (console_log_enabled_) {
-            std::ostream& output_stream = severity == Level::Error ? std::cerr : std::cout;
-            output_stream << formatted_msg;
-            output_stream << std::endl;
+            std::println("{}", formatted_string);
         }
     }
 

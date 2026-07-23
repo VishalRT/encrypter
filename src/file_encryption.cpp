@@ -4,10 +4,13 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
+#include <array>
 #include <cstddef>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "logger.h"
@@ -19,13 +22,13 @@ constexpr size_t SALT_SIZE = 16;
 constexpr size_t KEY_SIZE = 32; // AES-256
 constexpr size_t IV_SIZE = 16;
 constexpr int PBKDF2_ITERS = 100000;
-const char MAGIC_HEADER[] = "ENCRYPTERV1"; // 11 bytes
+constexpr std::string_view MAGIC_HEADER{"ENCRYPTERV1"}; // 11 Bytes
 
 void print_openssl_error() {
     unsigned long err = ERR_get_error();
-    if (err) {
-        char buf[256];
-        ERR_error_string_n(err, buf, sizeof(buf));
+    if (err == 0) {
+        std::array<char, 256> buf;
+        ERR_error_string_n(err, buf.begin(), sizeof(buf));
         enc_logger::log.error("OpenSSL error: {}", buf);
     }
 }
@@ -34,9 +37,9 @@ bool derive_key_iv(const std::string& password, const std::vector<unsigned char>
                    std::vector<unsigned char>& key, std::vector<unsigned char>& iv) {
     std::vector<unsigned char> buf(KEY_SIZE + IV_SIZE);
     const EVP_MD* md = EVP_sha256();
-    if (!PKCS5_PBKDF2_HMAC(password.c_str(), static_cast<int>(password.size()), salt.data(),
-                           static_cast<int>(salt.size()), PBKDF2_ITERS, md,
-                           static_cast<int>(buf.size()), buf.data())) {
+    if (PKCS5_PBKDF2_HMAC(password.c_str(), static_cast<int>(password.size()), salt.data(),
+                          static_cast<int>(salt.size()), PBKDF2_ITERS, md,
+                          static_cast<int>(buf.size()), buf.data()) == 0) {
         print_openssl_error();
         return false;
     }
@@ -74,12 +77,12 @@ int encrypt_file_stream(const std::string& input_path, const std::string& output
     }
 
     // write header: MAGIC + salt
-    outfile.write(MAGIC_HEADER, sizeof(MAGIC_HEADER) - 1);
+    outfile.write(MAGIC_HEADER.begin(), static_cast<std::streamsize>(MAGIC_HEADER.size()));
     outfile.write(reinterpret_cast<const char*>(salt.data()),
                   static_cast<std::streamsize>(salt.size()));
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    if (!ctx) {
+    if (ctx == nullptr) {
         enc_logger::log.error("EVP_CIPHER_CTX_new failed");
         return 1;
     }
@@ -132,20 +135,20 @@ int decrypt_file_stream(const std::string& input_path, const std::string& output
     }
 
     std::filebuf file_buffer;
-    if (!file_buffer.open(output_path, std::ios::out | std::ios::binary)) {
+    file_buffer.open(output_path, std::ios::out | std::ios::binary);
+    if (!file_buffer.is_open()) {
         enc_logger::log.error("Failed to open/create decrypted file: {}", output_path);
         return 1;
     }
 
-    std::vector<unsigned char> magic_header(sizeof(MAGIC_HEADER) - 1);
+    std::vector<char> magic_header(sizeof(MAGIC_HEADER) - 1);
     if (!infile.read(reinterpret_cast<char*>(magic_header.data()), sizeof(MAGIC_HEADER) - 1)) {
         enc_logger::log.error("Failed to read magic header from encrypted file");
         return 1;
     }
 
     // Verify magic header
-    if (std::string(reinterpret_cast<char*>(magic_header.data()), sizeof(MAGIC_HEADER) - 1) !=
-        MAGIC_HEADER) {
+    if (std::string_view(magic_header.data(), magic_header.size()) != MAGIC_HEADER) {
         enc_logger::log.error("Invalid file format - not an ENCRYPTERV1 encrypted file");
         return 1;
     }
@@ -163,7 +166,7 @@ int decrypt_file_stream(const std::string& input_path, const std::string& output
     }
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    if (!ctx) {
+    if (ctx == nullptr) {
         enc_logger::log.error("EVP_CIPHER_CTX_new failed");
         return 1;
     }
