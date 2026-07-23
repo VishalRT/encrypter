@@ -111,6 +111,7 @@ private:
         }
 
         std::string_view app_log_level{log_level_env};
+        // TODO: For testing. Remove these cout log statements. loggers having log smh my head??
         std::cout << "Log Level from ENV: " << app_log_level << std::endl;
         std::println("Log Level from Env: {}", app_log_level);
 
@@ -130,16 +131,16 @@ private:
             return;
         }
 
-        std::string formatted_string = std::format("[{}] ", to_string(severity)) +
-                                       std::format(fmt_str, std::forward<Args>(args)...);
+        const std::string FORMATTED_STRING = std::format("[{}] ", to_string(severity)) +
+                                             std::format(fmt_str, std::forward<Args>(args)...) +
+                                             '\n';
 
         if (log_file_stream_ && log_file_stream_->good()) {
-            *log_file_stream_ << formatted_string;
-            *log_file_stream_ << '\n';
+            *log_file_stream_ << FORMATTED_STRING;
         }
 
         if (console_log_enabled_) {
-            std::println("{}", formatted_string);
+            std::cout << FORMATTED_STRING;
         }
     }
 

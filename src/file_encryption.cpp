@@ -141,8 +141,8 @@ int decrypt_file_stream(const std::string& input_path, const std::string& output
         return 1;
     }
 
-    std::vector<char> magic_header(sizeof(MAGIC_HEADER) - 1);
-    if (!infile.read(reinterpret_cast<char*>(magic_header.data()), sizeof(MAGIC_HEADER) - 1)) {
+    std::vector<char> magic_header(MAGIC_HEADER.size());
+    if (!infile.read(reinterpret_cast<char*>(magic_header.data()), MAGIC_HEADER.size())) {
         enc_logger::log.error("Failed to read magic header from encrypted file");
         return 1;
     }
